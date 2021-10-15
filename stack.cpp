@@ -223,8 +223,6 @@ enum ERRORS stackOK (const Stack* st)
         if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
-        //for (int num = st->Size + 1; num < st->capacity - 1; num++)
-         //   if (st->data[num] != POISON) return POISON_ERROR;
     }
 
     if (DEBUG_LEVEL == 3)
