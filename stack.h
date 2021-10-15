@@ -4,13 +4,16 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <stdlib.h>
+#include <stdlib.h> 
 
 
 #ifndef LOG_INFO
 #define LOG_INFO printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__); 
 #endif
 
+#ifndef PUT_CANARY
+#define PUT_CANARY *(canary_t*)(st->data - 1) = CANARY; *(canary_t*)(st->data + st->capacity + 1) = CANARY;
+#endif
 
 #ifndef BAD_INPUT
 #define BAD_INPUT  printf ("Incorrect input!\nPlease, enter a number.\n")
@@ -20,7 +23,6 @@
 enum ERRORS
 {
     NO_ERRORS                = 0,
-    TEST_FAILD               = 1,
     STACK_UNDERFLOW          = 10101,
     STACK_OVERFLOW           = 10201,
     ALLOC_ERROR              = 10301,
@@ -36,11 +38,10 @@ enum ERRORS
 };
 
 
-//typedef long canary_t;
+typedef long long canary_t;
 
-
-const int CANARY             = 0xBADDCAFE;
-const int START_STACK_SIZE   = 2;
+const canary_t CANARY        = 0xBADDCAFE;
+const int START_STACK_SIZE   = 4;
 const int RESIZE_COEFFICIENT = 2;
 
 const int POISON             = 0xDEADBEEF;
@@ -50,33 +51,25 @@ const int POISON             = 0xDEADBEEF;
 struct Stack
 {
 
-    int leftCanary;
+    canary_t leftCanary;
 
     int* data;
     size_t capacity;
     size_t Size;
 
-    int rightCanary;
+    canary_t rightCanary;
 };
 
 
 
-int stackCtor (Stack* st);
-int stackPush (Stack* st, int value);
-int stackPop (Stack* st); 
-int stackDtor (Stack* st);
-int printStack(const Stack* st);
-int reallocate (Stack* st, size_t newSize);
+enum ERRORS stackCtor (Stack* st);
+enum ERRORS stackPush (Stack* st, int value);
+enum ERRORS stackPop (Stack* st); 
+enum ERRORS stackDtor (Stack* st);
+enum ERRORS printStack(const Stack* st);
+enum ERRORS reallocate (Stack* st, size_t newSize);
 void stackDump (int error);
-void cleanBuffer ();
-int stackOK (const Stack* st);
+enum ERRORS stackOK (const Stack* st);
 int CHECK_ERRORS (const Stack* st);
 size_t intHash (int const *input);
-void getValue (const char *str, int *val);
-
-
-const int NUM_OF_TESTS = 8;
-int RunUnitTest ();
-
-
 #endif

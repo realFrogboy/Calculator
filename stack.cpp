@@ -1,9 +1,9 @@
 #include "stack.h"
 
 size_t hash_value = 0;
-extern int DEBUG_LEVEL;
+extern int DEBUG_LEVEL; 
 
-int stackCtor (Stack* st)
+enum ERRORS stackCtor (Stack* st)
 {
     if (st == 0)
     {
@@ -13,19 +13,19 @@ int stackCtor (Stack* st)
 
     st->capacity = START_STACK_SIZE; st->Size = 0;
 
-    st->data = (int*) calloc (st->capacity + 1, sizeof (int));
+    st->data = (int*) calloc (st->capacity + 4, sizeof (int));
     if (st->data == NULL) 
     {    
         LOG_INFO;
         stackDump (ALLOC_ERROR);
     }
 
+    st->data = st->data + 1;
 
-    st->leftCanary  = CANARY; st->rightCanary            = CANARY;
-    st->data[0]     = CANARY; st->data[st->capacity + 1] = CANARY;
+    st->leftCanary = CANARY; st->rightCanary = CANARY;
+    PUT_CANARY;
 
     hash_value = intHash (st->data);
-
 
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -37,7 +37,7 @@ int stackCtor (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-int stackPush (Stack* st, int value)
+enum ERRORS stackPush (Stack* st, int value)
 {
     int error = 0;   
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -59,7 +59,7 @@ int stackPush (Stack* st, int value)
 //-----------------------------------------------------------------------------
 
 
-int stackPop (Stack* st)
+enum ERRORS stackPop (Stack* st)
 {
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -82,12 +82,12 @@ int stackPop (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-int stackDtor (Stack* st)
+enum ERRORS stackDtor (Stack* st)
 {
     int error = 0;   
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    free (st->data);
+    free (st->data - 1);
     st->Size = -1;
 
     return NO_ERRORS;
@@ -97,7 +97,7 @@ int stackDtor (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-int printStack (const Stack* st)
+enum ERRORS printStack (const Stack* st)
 {
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -120,22 +120,23 @@ int printStack (const Stack* st)
 //-----------------------------------------------------------------------------
 
 
-int reallocate (Stack* st, size_t newSize)
+enum ERRORS reallocate (Stack* st, size_t newSize)
 {
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
     st->capacity = newSize;
 
-    st->data = (int*) realloc (st->data, (st->capacity + 1) * sizeof (int));
-    if (st->data == NULL) 
+    int *ptrBegin = st->data - 1;
+
+    ptrBegin = (int*) realloc (ptrBegin, (st->capacity + 4) * sizeof (int));
+    if (ptrBegin == NULL) 
     {
         LOG_INFO;
         stackDump (REALLOC_ERROR);
     }
     
-
-    st->data[st->capacity + 1] = CANARY;
+    PUT_CANARY;
 
     hash_value = intHash (st->data);
 
@@ -207,16 +208,7 @@ void stackDump (int error)
 //-----------------------------------------------------------------------------
 
 
-void cleanBuffer ()
-{
-    while (getchar() != '\n') continue;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-int stackOK (const Stack* st)
+enum ERRORS stackOK (const Stack* st)
 {
     if ((DEBUG_LEVEL == 1) || (DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
@@ -227,8 +219,8 @@ int stackOK (const Stack* st)
 
     if ((DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
-        if (st->data[0] != CANARY) return DATA_CANARY_LEFT_ERROR;                 
-        if (st->data[st->capacity + 1] != CANARY) return DATA_CANARY_RIGHT_ERROR; 
+        if (*(canary_t*)(st->data - 1) != CANARY) return DATA_CANARY_LEFT_ERROR;                 
+        if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
         //for (int num = st->Size + 1; num < st->capacity - 1; num++)
@@ -274,18 +266,4 @@ size_t intHash (int const *input)
     }
 
     return ret;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-void getValue (const char *str, int *val)
-{
-    printf (str); 
-    while ((scanf ("%d", val)) != 1) 
-    { 
-        printf ("Incorrect input!\nPlease, enter a number.\n"); 
-        cleanBuffer (); 
-    } 
 }

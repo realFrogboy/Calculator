@@ -1,5 +1,5 @@
 #include <sys/stat.h>
-#include "stack.h"
+#include "stack.h" 
 
 int DEBUG_LEVEL = 3;
 
@@ -22,8 +22,6 @@ int main ()
         printf ("Can't open file\n");
         return 1;
     }
-
-    printf ("!\n");
 
     int fd = fileno (input);
     fstat (fd, &file_info);
@@ -55,6 +53,7 @@ int main ()
     }
 
     stackDtor (&stk);
+    free (str);
 
     return 0;
 }
