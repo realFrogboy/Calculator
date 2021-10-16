@@ -21,35 +21,35 @@ int funcDef (Stack *stk, int func_code, int value, int *index)
         case 2:
         {    
             sum (stk);
-            *index++;
+            *index += 1;
             return 0;
         }
 
         case 3:
         {    
             sub (stk);
-            *index++;
+            *index += 1;
             return 0;
         }
 
         case 4:
         {    
             mul (stk);
-            *index++;
+            *index += 1;
             return 0;
         }
 
         case 5:
         {    
             div (stk);
-            *index++;
+            *index += 1;
             return 0;
         }
 
         case 6:
         {    
             printf ("%d\n", stk->data[stk->Size]);
-            *index++;
+            *index += 1;
             return 0;
         }
 

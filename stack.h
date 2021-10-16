@@ -41,7 +41,7 @@ enum ERRORS
 typedef long long canary_t;
 
 const canary_t CANARY        = 0xBADDCAFE;
-const int START_STACK_SIZE   = 80;
+const int START_STACK_SIZE   = 4;
 const int RESIZE_COEFFICIENT = 2;
 
 const int POISON             = 0xDEADBEEF;

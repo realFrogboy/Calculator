@@ -11,7 +11,7 @@ int main ()
 
     stackCtor (&stk);
 
-    input = fopen ("dis.txt", "rb");
+    input = fopen ("code.txt", "rb");
     ERROR_INFO(input == NULL, "Can't open file\n");
 
     int fd = fileno (input);
@@ -53,6 +53,8 @@ int main ()
 
         num++;
     }
+
+    ind = 0;
 
     while (funct[ind])
     {

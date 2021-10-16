@@ -64,7 +64,7 @@ enum ERRORS stackPop (Stack* st)
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    if (st->Size <= st->capacity/RESIZE_COEFFICIENT)
+    if ((st->Size <= st->capacity/RESIZE_COEFFICIENT) && (st->Size != START_STACK_SIZE))
         reallocate (st, st->capacity/RESIZE_COEFFICIENT);
     
     st->data[st->Size] = POISON;
