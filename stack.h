@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 
 #ifndef LOG_INFO
@@ -15,6 +15,7 @@
 #define PUT_CANARY *(canary_t*)(st->data - 1) = CANARY; *(canary_t*)(st->data + st->capacity + 1) = CANARY;
 #endif
 
+ 
 #ifndef BAD_INPUT
 #define BAD_INPUT  printf ("Incorrect input!\nPlease, enter a number.\n")
 #endif
@@ -47,8 +48,7 @@ const int RESIZE_COEFFICIENT = 2;
 const int POISON             = 0xDEADBEEF;
 
 
-#ifndef STRUCT_STACK
-#define STRUCT_STACK
+
 struct Stack
 {
 
@@ -60,7 +60,6 @@ struct Stack
 
     canary_t rightCanary;
 };
-#endif
 
 
 

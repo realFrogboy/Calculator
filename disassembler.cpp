@@ -1,116 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h> 
-
-int funcDef (int func, char *res);
+#include "disassembler.h"
 
 int main ()
 {
     FILE *input, *output;
     struct stat file_info;
 
-    if ((input = fopen ("code.txt", "rb")) == NULL)
-    {
-        printf ("Error openning input file\n");
-        return 1;
-    }
+    input = fopen ("code.txt", "rb");
+    ERROR_INFO(input == NULL, "Can't open input file\n");
 
-    if ((output = fopen ("disass.txt", "wb")) == NULL)
-    {
-        printf ("Error openning file output\n");
-        return 1;
-    }
+    output = fopen ("disass.txt", "wb");
+    ERROR_INFO(output == NULL, "Can't open output file\n");
 
     int fd = fileno (input);
-    fstat (fd, &file_info);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
     char *str = (char*) calloc (file_info.st_size, sizeof (char));
-    fread (str, file_info.st_size, sizeof (char), input);
+    ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
 
-    char *ptr_line = str; char res[10] = ""; int num = 0;
+    int nReaded = fread (str, file_info.st_size, sizeof (char), input);
+    ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
-    while (strcmp (res, "hlt\0") != 0)
-    {    
-        if (str[num] == '\n')
-        {    
-            str[num] = '\0';
-
-            int func, value = 0;
-        
-            sscanf (ptr_line, "%d %d", &func, &value);
-
-            funcDef (func, res);
-            if (res == "dich")
-                printf ("!!!\n");
-            
-            if (func == 1)
-                fprintf (output, "%s %d\n", res, value);
-            else 
-                fprintf (output, "%s\n", res);
-
-            ptr_line = str + num + 1;
-            str[num] = '\n';
-        }
-
-        num++;
-    }
+    convertNumberIntoFunc (str, output);
 
     free (str);
+    fclose (input); fclose (output);
 
     return 0;
-}
-
-int funcDef (int func, char *res)
-{
-    switch (func)
-    {
-        case 0:
-        {  
-            strcpy (res, "hlt\0");
-            return 0;
-        }
-        
-        case 1:
-        {
-            strcpy (res, "stackPush\0");
-            return 0;
-        }
-        
-        case 2:
-        {
-            strcpy (res, "sum\0");
-            return 0;
-        }
-        
-        case 3:
-        {
-            strcpy (res, "sub\0");
-            return 0;
-        }
-        
-        case 4:
-        {
-            strcpy (res, "mul\0");
-            return 0;
-        }
-        
-        case 5:
-        {
-            strcpy (res, "div\0");
-            return 0;
-        }
-        
-        case 6:
-        {
-            strcpy (res, "out\0");
-            return 0;
-        }
-        
-        default:
-        {  
-            strcpy (res, "dich\0");
-            return 0;
-        }
-    }
 }

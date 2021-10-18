@@ -15,7 +15,9 @@ int main ()
     ERROR_INFO(input == NULL, "Can't open file\n");
 
     int fd = fileno (input);
-    fstat (fd, &file_info);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
     char *str = (char*) calloc (file_info.st_size, sizeof (char));
     ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
@@ -23,46 +25,17 @@ int main ()
     int nReaded = fread (str, file_info.st_size, sizeof (char), input);
     ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
-    char *ptr_line = str; int func_code = 1, num = 0, ind = 0;
     int funct [SIZE_OF_CODE] = {0};
 
-    while (func_code != 0)
-    {    
-        if (str[num] == '\n')
-        {    
-            str[num] = '\0';
+    arrayCtor (funct, str);
 
-            int value = 0;
-        
-            sscanf (ptr_line, "%d %d", &func_code, &value);
-
-            if (func_code == 1)
-            {
-                funct[ind] = func_code; funct[ind + 1] = value;
-                ind += 2;
-            }
-            else
-            {
-                funct[ind] = func_code;
-                ind++;
-            }
-
-            ptr_line = str + num + 1;
-            str[num] = '\n';
-        }
-
-        num++;
-    }
-
-    ind = 0;
-
+    int ind = 0;
     while (funct[ind])
-    {
         funcDef (&stk, funct[ind], funct[ind + 1], &ind);
-    }
 
     stackDtor (&stk);
     free (str);
+    fclose (input);
 
     return 0;
 }

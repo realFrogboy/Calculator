@@ -1,6 +1,7 @@
-#ifndef CALCULATOR_H
-#define CALCULATOR_H
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+#include <string.h> 
 
 #define ERROR_INFO(statement, text) do { \
     if (statement) {                     \
@@ -9,8 +10,5 @@
     } \
 } while (0)
 
-const int SIZE_OF_CODE = 50;
-
-int arrayCtor (int *funct, char *str);
-
-#endif
+int funcDef (int func, char *res);
+int convertNumberIntoFunc (char *str, FILE *output);

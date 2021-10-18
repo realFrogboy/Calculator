@@ -1,88 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h> 
-
-int funcDef (const char *func);
+#include "assembler.h"
 
 int main ()
 {
     FILE *input, *output;
     struct stat file_info;
 
-    if ((input = fopen ("dis.txt", "rb")) == NULL)
-    {
-        printf ("Error openning input file\n");
-        return 1;
-    }
+    input = fopen ("dis.txt", "rb");
+    ERROR_INFO(input == NULL, "Can't open input file\n");
 
-    if ((output = fopen ("code.txt", "wb")) == NULL)
-    {
-        printf ("Error openning file output\n");
-        return 1;
-    }
+    output = fopen ("code.txt", "wb");
+    ERROR_INFO(output == NULL, "Can't open output file\n");
 
     int fd = fileno (input);
-    fstat (fd, &file_info);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
     char *str = (char*) calloc (file_info.st_size, sizeof (char));
-    fread (str, file_info.st_size, sizeof (char), input);
+    ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
 
-    char *ptr_line = str; int res = 1, num = 0;
+    int nReaded = fread (str, file_info.st_size, sizeof (char), input);
+    ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
-    while (res != 0)
-    {    
-        if (str[num] == '\n')
-        {    
-            str[num] = '\0';
-
-            char func[10] = ""; int value = 0;
-        
-            sscanf (ptr_line, "%s %d", func, &value);
-
-            res = funcDef (func);
-            if (res == 111)
-                printf ("!!!\n");
-            
-            if (res == 1)   
-                fprintf (output, "%d %d\n", res, value);
-            else 
-                fprintf (output, "%d\n", res);
-
-            ptr_line = str + num + 1;
-            str[num] = '\n';
-        }
-
-        num++;
-    }
+    convertFuncIntoNumber (str, output);
 
     free (str);
+    fclose (input); fclose (output);
 
     return 0;
-}
-
-int funcDef (const char *func)
-{
-    if (strcmp ("stackPush", func) == 0)
-        return 1;
-
-    if (strcmp ("sum", func) == 0)
-        return 2;
-
-    if (strcmp ("sub", func) == 0)
-        return 3;
-
-    if (strcmp ("mul", func) == 0)
-        return 4;
-
-    if (strcmp ("div", func) == 0)
-        return 5;
-
-    if (strcmp ("out", func) == 0)
-        return 6;
-    
-    if (strcmp ("hlt", func) == 0)
-        return 0;
-    
-    return 111;
 }

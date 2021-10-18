@@ -1,7 +1,7 @@
 #include "stack.h"
 
 size_t hash_value = 0;
-extern int DEBUG_LEVEL; 
+extern int DEBUG_LEVEL;
 
 enum ERRORS stackCtor (Stack* st)
 {
@@ -20,7 +20,7 @@ enum ERRORS stackCtor (Stack* st)
         stackDump (ALLOC_ERROR);
     }
 
-    st->data = st->data + 1;
+    st->data++;
 
     st->leftCanary = CANARY; st->rightCanary = CANARY;
     PUT_CANARY;
@@ -47,7 +47,7 @@ enum ERRORS stackPush (Stack* st, int value)
 
     st->Size++;
     *(st->data + st->Size) = value;
-
+ 
     hash_value = intHash (st->data);
 
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -64,7 +64,7 @@ enum ERRORS stackPop (Stack* st)
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    if ((st->Size <= st->capacity/RESIZE_COEFFICIENT) && (st->Size != START_STACK_SIZE))
+    if (st->Size <= st->capacity/RESIZE_COEFFICIENT)
         reallocate (st, st->capacity/RESIZE_COEFFICIENT);
     
     st->data[st->Size] = POISON;
@@ -87,7 +87,7 @@ enum ERRORS stackDtor (Stack* st)
     int error = 0;   
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
-    free (st->data - 1);
+    free (--st->data);
     st->Size = -1;
 
     return NO_ERRORS;
@@ -126,15 +126,20 @@ enum ERRORS reallocate (Stack* st, size_t newSize)
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
     st->capacity = newSize;
+    st->data--;
 
-    int *ptrBegin = st->data - 1;
-
-    ptrBegin = (int*) realloc (ptrBegin, (st->capacity + 4) * sizeof (int));
-    if (ptrBegin == NULL) 
+    int *tmp = (int*) realloc (st->data, (st->capacity + 4) * sizeof(int));
+    if (tmp != NULL)
+    {   
+        st->data = tmp;
+        st->data++;
+    }
+    else
     {
         LOG_INFO;
-        stackDump (REALLOC_ERROR);
+        stackDump (REALLOC_ERROR);    
     }
+
     
     PUT_CANARY;
 
@@ -223,6 +228,8 @@ enum ERRORS stackOK (const Stack* st)
         if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
+        //for (int num = st->Size + 1; num < st->capacity - 1; num++)
+         //   if (st->data[num] != POISON) return POISON_ERROR;
     }
 
     if (DEBUG_LEVEL == 3)

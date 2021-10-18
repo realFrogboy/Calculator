@@ -67,6 +67,47 @@ int funcDef (Stack *stk, int func_code, int value, int *index)
 }
 
 
+//-----------------------------------------------------------------------------
+
+
+int arrayCtor (int *funct, char *str)
+{
+    char *ptr_line = str; int func_code = 1, num = 0, ind = 0;
+    while (func_code != 0)
+    {    
+        if (str[num] == '\n')
+        {    
+            str[num] = '\0';
+
+            int value = 0;
+        
+            sscanf (ptr_line, "%d %d", &func_code, &value);
+
+            if (func_code == 1)
+            {
+                funct[ind] = func_code; funct[ind + 1] = value;
+                ind += 2;
+            }
+            else
+            {
+                funct[ind] = func_code;
+                ind++;
+            }
+
+            ptr_line = str + num + 1;
+            str[num] = '\n';
+        }
+
+        num++;
+    }
+
+    return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
 int sum (Stack *stk)
 {
     int res = stk->data[stk->Size] + stk->data[stk->Size - 1];
