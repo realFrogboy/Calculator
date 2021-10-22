@@ -13,7 +13,6 @@ int main ()
         fputc (c, output);
     }
 
-
     fclose (input); fclose (output);
 
     return 0;

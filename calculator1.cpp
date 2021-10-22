@@ -25,13 +25,13 @@ int main ()
     int nReaded = fread (str, file_info.st_size, sizeof (char), input);
     ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
-    int funct [SIZE_OF_CODE] = {0};
+    char funct [SIZE_OF_CODE] = {0};
 
     arrayCtor (funct, str);
 
     int ind = 0;
-    while (funct[ind])
-        funcDef (&stk, funct[ind], funct[ind + 1], &ind);
+    while ((int)funct[ind])
+        funcDef (&stk, (int)funct[ind], (int)funct[ind + 1], &ind);
 
     stackDtor (&stk);
     free (str);

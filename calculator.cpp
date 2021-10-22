@@ -14,7 +14,7 @@ int funcDef (Stack *stk, int func_code, int value, int *index)
         case 1:
         {    
             stackPush (stk, value);
-            *index += 2;
+            *index += 5;
             return 0;
         }
 
@@ -70,7 +70,7 @@ int funcDef (Stack *stk, int func_code, int value, int *index)
 //-----------------------------------------------------------------------------
 
 
-int arrayCtor (int *funct, char *str)
+int arrayCtor (char *funct, char *str)
 {
     char *ptr_line = str; int func_code = 1, num = 0, ind = 0;
     while (func_code != 0)
@@ -85,12 +85,12 @@ int arrayCtor (int *funct, char *str)
 
             if (func_code == 1)
             {
-                funct[ind] = func_code; funct[ind + 1] = value;
-                ind += 2;
+                funct[ind] = (char)func_code; *(int *)(funct + ind + 1) = value;
+                ind += 5;
             }
             else
             {
-                funct[ind] = func_code;
+                funct[ind] = (char)func_code;
                 ind++;
             }
 
@@ -99,6 +99,11 @@ int arrayCtor (int *funct, char *str)
         }
 
         num++;
+    }
+
+    for (num = 0; num < ind; num++)
+    {
+        printf ("%d\n", funct[num]);
     }
 
     return 0;

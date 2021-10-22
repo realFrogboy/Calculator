@@ -1,31 +1,27 @@
 #include "stack.h"
+#include "all_hashs.h"
 
-size_t hash_value = 0;
+long long hash_data = 0;
+long long hash_capacity = 0;
+long long hash_size = 0;
+
 extern int DEBUG_LEVEL;
 
 enum ERRORS stackCtor (Stack* st)
 {
-    if (st == 0)
-    {
-        LOG_INFO;
-        stackDump (VOID_STACK);
-    }
+    ERROR_INFO(st == 0, "ERROR: Void ptr on stack\n");
 
     st->capacity = START_STACK_SIZE; st->Size = 0;
 
     st->data = (int*) calloc (st->capacity + 4, sizeof (int));
-    if (st->data == NULL) 
-    {    
-        LOG_INFO;
-        stackDump (ALLOC_ERROR);
-    }
+    ERROR_INFO(st->data == NULL, "ERROR: Can't alloc memory\n");
 
     st->data++;
 
     st->leftCanary = CANARY; st->rightCanary = CANARY;
     PUT_CANARY;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
     int error = 0;
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
@@ -48,7 +44,7 @@ enum ERRORS stackPush (Stack* st, int value)
     st->Size++;
     *(st->data + st->Size) = value;
  
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
@@ -71,7 +67,7 @@ enum ERRORS stackPop (Stack* st)
     
     --st->Size;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
@@ -96,7 +92,7 @@ enum ERRORS stackDtor (Stack* st)
 
 //-----------------------------------------------------------------------------
 
-
+/*
 enum ERRORS printStack (const Stack* st)
 {
     int error = 0;
@@ -115,7 +111,7 @@ enum ERRORS printStack (const Stack* st)
 
     return NO_ERRORS;
 }
-
+*/
 
 //-----------------------------------------------------------------------------
 
@@ -135,15 +131,11 @@ enum ERRORS reallocate (Stack* st, size_t newSize)
         st->data++;
     }
     else
-    {
-        LOG_INFO;
-        stackDump (REALLOC_ERROR);    
-    }
+        ERROR_INFO(tmp == NULL, "ERROR: Can't realloc memory\n");
 
-    
     PUT_CANARY;
 
-    hash_value = intHash (st->data);
+    CALC_HASH;
 
     if ((error = CHECK_ERRORS (st)) != 0) LOG_INFO;
 
@@ -197,6 +189,14 @@ void stackDump (int error)
         case DATA_HASH_ERROR:
             printf ("\t\tERROR CODE: Data's hash changed\n");
             break;
+        
+        case CAPACITY_HASH_ERROR:
+            printf ("\t\tERROR CODE: Capacity's hash changed\n");
+            break;
+        
+        case SIZE_HASH_ERROR:
+            printf ("\t\tERROR CODE: Size's hash changed\n");
+            break;
 
         case POISON_ERROR:
             printf ("\t\tERROR CODE: Poision number changed\n");
@@ -228,12 +228,12 @@ enum ERRORS stackOK (const Stack* st)
         if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
-        //for (int num = st->Size + 1; num < st->capacity - 1; num++)
-         //   if (st->data[num] != POISON) return POISON_ERROR;
     }
 
     if (DEBUG_LEVEL == 3)
-        if (intHash (st->data) != hash_value) return DATA_HASH_ERROR;
+        if (TEMPLATE_HASH(Hash, int) (st->data) != hash_data) return DATA_HASH_ERROR;
+        if (TEMPLATE_HASH(Hash, size_t) (&st->capacity) != hash_capacity) return CAPACITY_HASH_ERROR;
+        if (TEMPLATE_HASH(Hash, size_t) (&st->Size) != hash_size) return SIZE_HASH_ERROR;
 
     return NO_ERRORS;
 }
