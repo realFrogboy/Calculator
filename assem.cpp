@@ -23,7 +23,7 @@ int funcDef (const char *func)
     if (strcmp ("hlt", func) == 0)
         return 0;
     
-    return 111;
+    return 404;
 }
 
 int convertFuncIntoNumber (char *str, FILE *output)
@@ -41,8 +41,7 @@ int convertFuncIntoNumber (char *str, FILE *output)
             sscanf (ptr_line, "%s %d", func, &value);
 
             res = funcDef (func);
-            if (res == 111)
-                printf ("!!!\n");
+            ERROR_INFO(res == 404, "There is no such function\n");
             
             if (res == 1)   
                 fprintf (output, "%d %d\n", res, value);

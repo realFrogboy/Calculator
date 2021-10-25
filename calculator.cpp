@@ -1,55 +1,48 @@
 #include "calculator.h"
-#include "stack.h"
 
-int funcDef (Stack *stk, int func_code, int value, int index);
-int sum (Stack *stk);
-int sub (Stack *stk);
-int mul (Stack *stk);
-int div (Stack *stk);
-
-int funcDef (Stack *stk, int func_code, int value, int *index)
+int funcDef (Stack *stk, int func_code, int value, int *ip)
 {
     switch (func_code)
     {
         case 1:
         {    
             stackPush (stk, value);
-            *index += 5;
+            *ip += 5;
             return 0;
         }
 
         case 2:
         {    
             sum (stk);
-            *index += 1;
+            *ip += 1;
             return 0;
         }
 
         case 3:
         {    
             sub (stk);
-            *index += 1;
+            *ip += 1;
             return 0;
         }
 
         case 4:
         {    
             mul (stk);
-            *index += 1;
+            *ip += 1;
             return 0;
         }
 
         case 5:
         {    
             div (stk);
-            *index += 1;
+            *ip += 1;
             return 0;
         }
 
         case 6:
         {    
-            printf ("%d\n", stk->data[stk->Size]);
-            *index += 1;
+            out (stk);
+            *ip += 1;
             return 0;
         }
 
@@ -85,7 +78,8 @@ int arrayCtor (char *funct, char *str)
 
             if (func_code == 1)
             {
-                funct[ind] = (char)func_code; *(int *)(funct + ind + 1) = value;
+                funct[ind] = (char)func_code; 
+                *(int *)(funct + ind + 1) = value;
                 ind += 5;
             }
             else
@@ -143,4 +137,11 @@ int div (Stack *stk)
     stackPop (stk); stackPop (stk);
     stackPush (stk, res);
     return 0;
+}
+
+int out (Stack *stk)
+{
+    printf ("%d\n", stk->data[stk->Size]); 
+    stackPop (stk);
+    return 0;   
 }

@@ -8,34 +8,43 @@
 #include <sys/stat.h>
 #include "all_hashs.h"
 
-#ifndef ERROR_INFO
-#define ERROR_INFO(statement, text) do {                                                \
-    if (statement) {                                                                    \
-        printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__); \
-        printf (#text);                                                                 \
-    }                                                                                   \
-} while (0)
+#ifndef IS_STACK_OK
+#define IS_STACK_OK do {                                                                                                                                                 \
+                        int error = 0;                                                                                                                                   \
+                        if ((error = CHECK_ERRORS (st)) != 0)                                                                                                            \
+                        {                                                                                                                                                \
+                            printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);                                                              \
+                            printf ("Stack:\n");                                                                                                                         \
+                            printStack (st);                                                                                                                             \
+                            printf ("                 Left stack canary  Right stack canary  Left data canary  Right data canary  Data hash  Capacity hash  Size hash\n" \
+                                    "Expexted values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n"      \
+                                    "Received values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n",     \
+                                    CANARY, CANARY, CANARY, CANARY, hash_data, hash_capacity, hash_size,                                                                 \
+                                    st->leftCanary, st->rightCanary, *(canary_t*)(st->data - 1), *(canary_t*)(st->data + st->capacity + 1),                              \
+                                    TEMPLATE_HASH(Hash, int) (st->data), TEMPLATE_HASH(Hash, size_t) (&st->capacity), TEMPLATE_HASH(Hash, size_t) (&st->Size));          \
+                        }                                                                                                                                                \
+                    } while (0)
 #endif
 
-#ifndef LOG_INFO
-#define LOG_INFO printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__); 
+#ifndef ERROR_INFO
+#define ERROR_INFO(statement, text) do {                                                                                    \
+                                        if (statement) {                                                                    \
+                                            printf ("%s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);  \
+                                            printf (#text);                                                                 \
+                                        }                                                                                   \
+                                    } while (0)
 #endif
 
 #ifndef PUT_CANARY
 #define PUT_CANARY *(canary_t*)(st->data - 1) = CANARY; *(canary_t*)(st->data + st->capacity + 1) = CANARY;
 #endif
 
- 
-#ifndef BAD_INPUT
-#define BAD_INPUT  printf ("Incorrect input!\nPlease, enter a number.\n")
-#endif
-
 #ifndef CALC_HASH
-#define CALC_HASH do {                                           \
-    hash_data = TEMPLATE_HASH(Hash, int) (st->data);             \
-    hash_capacity = TEMPLATE_HASH(Hash, size_t) (&st->capacity); \
-    hash_size = TEMPLATE_HASH(Hash, size_t) (&st->Size);         \
-} while (0)
+#define CALC_HASH   do {                                                                \
+                        hash_data = TEMPLATE_HASH(Hash, int) (st->data);                \
+                        hash_capacity = TEMPLATE_HASH(Hash, size_t) (&st->capacity);    \
+                        hash_size = TEMPLATE_HASH(Hash, size_t) (&st->Size);            \
+                    } while (0)
 #endif
 
 
@@ -68,7 +77,6 @@ const int RESIZE_COEFFICIENT = 2;
 const int POISON             = 0xDEADBEEF;
 
 
-
 struct Stack
 {
 
@@ -82,15 +90,15 @@ struct Stack
 };
 
 
-
-enum ERRORS stackCtor (Stack* st);
-enum ERRORS stackPush (Stack* st, int value);
-enum ERRORS stackPop (Stack* st); 
-enum ERRORS stackDtor (Stack* st);
-enum ERRORS printStack(const Stack* st);
-enum ERRORS reallocate (Stack* st, size_t newSize);
+ERRORS stackCtor (Stack* st);
+ERRORS stackPush (Stack* st, int value);
+ERRORS stackPop (Stack* st); 
+ERRORS stackDtor (Stack* st);
+ERRORS printStack(const Stack* st);
+ERRORS reallocate (Stack* st, size_t newSize);
 void stackDump (int error);
-enum ERRORS stackOK (const Stack* st);
+ERRORS printStack (const Stack* st);
+ERRORS stackOK (const Stack* st);
 int CHECK_ERRORS (const Stack* st);
 
 #endif

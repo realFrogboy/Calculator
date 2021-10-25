@@ -1,4 +1,4 @@
-#include "disassembler.h"
+#include "assembler.h"
 
 int funcDef (int func, char *res)
 {
@@ -49,7 +49,7 @@ int funcDef (int func, char *res)
         default:
         {  
             strcpy (res, "dich\0");
-            return 0;
+            return 404;
         }
     }
 }
@@ -69,8 +69,7 @@ int convertNumberIntoFunc (char *str, FILE *output)
             sscanf (ptr_line, "%d %d", &func, &value);
 
             funcDef (func, res);
-            if (res == "dich")
-                printf ("!!!\n");
+            ERROR_INFO(res == "dich", "There is no such function\n");
             
             if (func == 1)
                 fprintf (output, "%s %d\n", res, value);

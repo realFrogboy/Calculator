@@ -1,8 +1,13 @@
-#include "stack.h" 
 #include "calculator.h"
 
-int funcDef (Stack *stk, int func_code, int value, int *index);
 int DEBUG_LEVEL = 3;
+
+/*#define debug_lvl_hash
+#define debug_lvl_canaries
+
+#ifdef debug_lvl_hash
+    //todo
+#endif*/
 
 int main ()
 {
@@ -29,9 +34,9 @@ int main ()
 
     arrayCtor (funct, str);
 
-    int ind = 0;
-    while ((int)funct[ind])
-        funcDef (&stk, (int)funct[ind], (int)funct[ind + 1], &ind);
+    int ip = 0;
+    while ((int)funct[ip])
+        funcDef (&stk, (int)funct[ip], (int)funct[ip + 1], &ip);
 
     stackDtor (&stk);
     free (str);
