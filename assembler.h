@@ -15,7 +15,8 @@
 } while (0)
 #endif
 
-int funcDef (const char *func);
+int AssFuncDef (const char *func);
+int scanLine (const char *ptr_line);
 int convertFuncIntoNumber (char *str, FILE *output);
 int convertNumberIntoFunc (char *str, FILE *output);
 
