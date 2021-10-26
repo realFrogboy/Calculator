@@ -12,9 +12,9 @@ int DEBUG_LEVEL = 3;
 int main ()
 {
     FILE *input = NULL;
-    struct stat file_info; struct Stack stk;
+    struct stat file_info; struct CPU processor;
 
-    stackCtor (&stk);
+    CPUCtor (&processor);
 
     input = fopen ("code.txt", "rb");
     ERROR_INFO(input == NULL, "Can't open file\n");
@@ -25,20 +25,19 @@ int main ()
     ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
     char *str = (char*) calloc (file_info.st_size, sizeof (char));
-    ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
+    ERROR_INFO(str == NULL,  "Can't alloc memory\n");
 
     int nReaded = fread (str, file_info.st_size, sizeof (char), input);
     ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
-    char funct [SIZE_OF_CODE] = {0};
+    arrayCtor (&processor, str);
 
-    arrayCtor (funct, str);
+    while ((int)processor.code[processor.ip])
+        ERROR_INFO(funcDef (&processor) == 404, "There is no such function\n");
 
-    int ip = 0;
-    while ((int)funct[ip])
-        funcDef (&stk, (int)funct[ip], (int)funct[ip + 1], &ip);
-
-    stackDtor (&stk);
+    stackDtor (processor.stk);
+    free (processor.stk); free (processor.code);
+    free (processor.RAM); free (processor.regs);
     free (str);
     fclose (input);
 

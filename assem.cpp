@@ -5,7 +5,7 @@ int funcDef (const char *func)
     if (strcmp ("stackPush", func) == 0)
         return 1;
 
-    if (strcmp ("sum", func) == 0)
+    if (strcmp ("add", func) == 0)
         return 2;
 
     if (strcmp ("sub", func) == 0)

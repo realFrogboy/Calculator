@@ -18,7 +18,7 @@ int funcDef (int func, char *res)
         
         case 2:
         {
-            strcpy (res, "sum\0");
+            strcpy (res, "add\0");
             return 0;
         }
         

@@ -1,48 +1,75 @@
 #include "calculator.h"
 
-int funcDef (Stack *stk, int func_code, int value, int *ip)
+int CPUCtor (CPU *processor)
 {
-    switch (func_code)
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
+    processor->stk = (Stack*) calloc (STACK_SIZE, sizeof (int));
+    ERROR_INFO(processor->code == NULL,  "Can't alloc memory\n");
+
+    stackCtor (processor->stk);
+
+    processor->ip = 0;
+
+    processor->code = (char*) calloc (SIZE_OF_CODE, sizeof (char));
+    ERROR_INFO(processor->code == NULL,  "Can't alloc memory\n");
+
+    processor->RAM = (int*) calloc (SIZE_OF_RAM, sizeof (int));
+    ERROR_INFO(processor->RAM == NULL,  "Can't alloc memory\n");
+
+    processor->regs = (int*) calloc (SIZE_OF_REGS, sizeof (int));
+    ERROR_INFO(processor->regs == NULL,  "Can't alloc memory\n");
+
+    return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int funcDef (CPU *processor)
+{
+    switch ((int)processor->code[processor->ip])
     {
         case 1:
         {    
-            stackPush (stk, value);
-            *ip += 5;
+            stackPush (processor->stk, (int)processor->code[processor->ip + 1]);
+            processor->ip += 5;
             return 0;
         }
 
         case 2:
         {    
-            sum (stk);
-            *ip += 1;
+            add (processor->stk);
+            processor->ip += 1;
             return 0;
         }
 
         case 3:
         {    
-            sub (stk);
-            *ip += 1;
+            sub (processor->stk);
+            processor->ip += 1;
             return 0;
         }
 
         case 4:
         {    
-            mul (stk);
-            *ip += 1;
+            mul (processor->stk);
+            processor->ip += 1;
             return 0;
         }
 
         case 5:
         {    
-            div (stk);
-            *ip += 1;
+            div (processor->stk);
+            processor->ip += 1;
             return 0;
         }
 
         case 6:
         {    
-            out (stk);
-            *ip += 1;
+            out (processor->stk);
+            processor->ip += 1;
             return 0;
         }
 
@@ -53,8 +80,7 @@ int funcDef (Stack *stk, int func_code, int value, int *ip)
 
         default: 
         {
-            printf ("There is no such function\n");
-            return 111;
+            return 404;
         }
     }
 }
@@ -63,7 +89,7 @@ int funcDef (Stack *stk, int func_code, int value, int *ip)
 //-----------------------------------------------------------------------------
 
 
-int arrayCtor (char *funct, char *str)
+int arrayCtor (CPU *processor, char *str)
 {
     char *ptr_line = str; int func_code = 1, num = 0, ind = 0;
     while (func_code != 0)
@@ -78,13 +104,13 @@ int arrayCtor (char *funct, char *str)
 
             if (func_code == 1)
             {
-                funct[ind] = (char)func_code; 
-                *(int *)(funct + ind + 1) = value;
+                processor->code[ind] = (char)func_code; 
+                *(int *)(processor->code + ind + 1) = value;
                 ind += 5;
             }
             else
             {
-                funct[ind] = (char)func_code;
+                processor->code[ind] = (char)func_code;
                 ind++;
             }
 
@@ -97,7 +123,7 @@ int arrayCtor (char *funct, char *str)
 
     for (num = 0; num < ind; num++)
     {
-        printf ("%d\n", funct[num]);
+        printf ("%d\n", processor->code[num]);
     }
 
     return 0;
@@ -107,36 +133,26 @@ int arrayCtor (char *funct, char *str)
 //-----------------------------------------------------------------------------
 
 
-int sum (Stack *stk)
+int add (Stack *stk)
 {
-    int res = stk->data[stk->Size] + stk->data[stk->Size - 1];
-    stackPop (stk); stackPop (stk);
-    stackPush (stk, res);
-    return 0;
+    OPERATION(+);
 }
 
 int sub (Stack *stk)
 {
-    int res = stk->data[stk->Size - 1] - stk->data[stk->Size];
-    stackPop (stk); stackPop (stk);
-    stackPush (stk, res);
-    return 0;
+    OPERATION(-);
 }
 
 int mul (Stack *stk)
 {
-    int res = stk->data[stk->Size - 1] * stk->data[stk->Size];
-    stackPop (stk); stackPop (stk);
-    stackPush (stk, res);
-    return 0;
+    OPERATION(*);
 }
 
 int div (Stack *stk)
 {
-    int res = stk->data[stk->Size - 1] / stk->data[stk->Size];
-    stackPop (stk); stackPop (stk);
-    stackPush (stk, res);
-    return 0;
+    ERROR_INFO(stk->data[stk->Size] == 0, "Division by 0!\n");
+
+    OPERATION(/);
 }
 
 int out (Stack *stk)
