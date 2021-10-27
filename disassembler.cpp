@@ -22,6 +22,8 @@ int main ()
     int nReaded = fread (str, file_info.st_size, sizeof (char), input);
     ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
 
+    printf ("%d ----- %ld", nReaded, file_info.st_size);
+
     convertNumberIntoFunc (str, output);
 
     free (str);

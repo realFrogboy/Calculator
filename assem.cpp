@@ -1,9 +1,14 @@
 #include "assembler.h"
 
-int scanLine (const char *ptr_line)
+char* scanLine (const char *ptr_line)
 {
-    char reg = '\0', func[10] = ""; 
+    char reg = '\0', func[10] = "";
     int value = 0, ver = 0, res = 404;
+    
+    char *str = (char*) calloc (100, sizeof (char));
+    ERROR_INFO(str == NULL, "Can't alloc memory\n");
+
+    sprintf (str, "%s", "bad");
      
     sscanf (ptr_line, "%s [%cx + %d]%n", func, &reg, &value, &ver);
     if (ver)
@@ -13,14 +18,28 @@ int scanLine (const char *ptr_line)
 
         res = res | (1u << 5);
 
-        if ((reg >= 'a') && (reg <= 'd')) 
-            res = res | (1u << 6);
-        else if (res != '\0')
-            ERROR_INFO (res != '\0', "There is no such register\n");
+        int regNum = placeReg (reg, &res);
 
         res = res | (1u << 7);
 
-        return res;
+        sprintf (str, "%d %d %d", res, regNum, value);
+
+        return str;
+    }
+
+    sscanf (ptr_line, "%s %cx + %d%n", func, &reg, &value, &ver);
+    if (ver)
+    {
+        res = AssFuncDef (func);
+        ERROR_INFO(res == 404, "There is no such function\n");
+
+        res = res | (1u << 5);
+
+        int regNum = placeReg (reg, &res);
+
+        sprintf (str, "%d %d %d", res, regNum, value);
+
+        return str;
     }
     
     sscanf (ptr_line, "%s [%cx]%n", func, &reg, &ver);
@@ -29,26 +48,27 @@ int scanLine (const char *ptr_line)
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
 
-        if ((reg >= 'a') && (reg <= 'd')) 
-            res = res | (1u << 6);
-        else if (res != '\0')
-            ERROR_INFO (res != '\0', "There is no such register\n");
-        
+        int regNum = placeReg (reg, &res);
+
         res = res | (1u << 7);
 
-        return res;
+        sprintf (str, "%d %d", res, regNum);
+
+        return str;
     }
 
     sscanf (ptr_line, "%s [%d]%n", func, &value, &ver);
     if (ver)
-    {
+    {   
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
 
         res = res | (1u << 5); 
         res = res | (1u << 7);
 
-        return res;   
+        sprintf (str, "%d %d", res, value);
+
+        return str;   
     }
 
     sscanf (ptr_line, "%s %cx%n", func, &reg, &ver);
@@ -57,35 +77,40 @@ int scanLine (const char *ptr_line)
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
 
-        if ((reg >= 'a') && (reg <= 'd')) 
-            res = res | (1u << 6);
-        else if (res != '\0')
-            ERROR_INFO (res != '\0', "There is no such register\n");
+        int regNum = placeReg (reg, &res);
         
-        return res;
+        sprintf (str, "%d %d", res, regNum);
+
+        return str;
     }
 
     sscanf (ptr_line, "%s %d%n", func, &value, &ver);
     if (ver)
-    {
+    { 
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n"); 
 
         res = res | (1u << 5); 
 
-        return res;  
+        sprintf (str, "%d %d", res, value);
+
+        return str;  
     }
      
     sscanf (ptr_line, "%s%n", func, &ver);
     if (ver)
-    {
+    {   
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
+
+        sprintf (str, "%d", res);
+        
+        return str;
     } 
     
     ERROR_INFO(ver == 0, "Incorrect input\n");
 
-    return res;
+    return str;
 }
 
 
@@ -94,20 +119,22 @@ int scanLine (const char *ptr_line)
 
 int convertFuncIntoNumber (char *str, FILE *output)
 {
-    char *ptr_line = str; int res = 1, num = 0;
+    char *ptr_line = str;
+    int num = 0;
 
-    while (res != 0)
+    while (str[num] != '\0')
     {    
         if (str[num] == '\n')
         {    
-            str[num] = '\0';
+            char *out = (char*) calloc (100, sizeof (char));
+            ERROR_INFO(out == NULL, "Can't alloc memeory\n");
 
-            res = scanLine (ptr_line);
+            out = scanLine (ptr_line);
 
-            fprintf (output, "%d\n", res);
+            fprintf (output, "%s\n", out);
 
             ptr_line = str + num + 1;
-            str[num] = '\n';
+            free (out);
         }
 
         num++;
@@ -149,4 +176,23 @@ int AssFuncDef (const char *func)
         res = 7;
     
     return res;    
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int placeReg (char reg, int *res)
+{
+    int regNum = 0;
+
+    if ((reg >= 'a') && (reg <= 'd')) 
+    {   
+        *res = *res | (1u << 6);
+        regNum = (int)reg - (int)('a') + 1;
+    }
+    else if (reg != '\0')
+        ERROR_INFO (reg != '\0', "There is no such register\n");
+    
+    return regNum;
 }
