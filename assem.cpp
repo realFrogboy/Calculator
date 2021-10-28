@@ -151,7 +151,7 @@ int AssFuncDef (const char *func)
 {
     int res = 404;
 
-    if (strcmp ("stackPush", func) == 0)
+    if (strcmp ("push", func) == 0)
         res = 1;
 
     else if (strcmp ("add", func) == 0)

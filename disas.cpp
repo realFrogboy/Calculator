@@ -28,7 +28,7 @@ char* DisFuncDef (const char *ptr_line)
         return str;
     }
 
-    if ((((func >> 6) & 1u) == 1))
+    else if ((((func >> 6) & 1u) == 1))
     {
         sscanf (ptr_line, "%d %d", &func, &regNum);
 
@@ -39,7 +39,7 @@ char* DisFuncDef (const char *ptr_line)
         return str;   
     }
 
-    if ((((func >> 5) & 1u) == 1))
+    else if ((((func >> 5) & 1u) == 1))
     {
         sscanf (ptr_line, "%d %d", &func, &val);
 
@@ -48,7 +48,10 @@ char* DisFuncDef (const char *ptr_line)
         return str;   
     }
 
-    sprintf (str, "%s", name_of_func);
+    else
+        sprintf (str, "%s", name_of_func);
+
+    free (name_of_func);
 
     return str;
 }
@@ -72,7 +75,7 @@ char* defineName (int funcNum)
         
         case 1:
         {
-            strcpy (res, "stackPush");
+            strcpy (res, "push");
             return res;
         }
         
@@ -142,6 +145,8 @@ int convertNumberIntoFunc (char *str, FILE *output)
             fprintf (output, "%s\n", out);
 
             ptr_line = str + num + 1;
+
+            free (out);
         }
 
         num++;

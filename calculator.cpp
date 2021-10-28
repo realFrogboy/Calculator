@@ -20,56 +20,135 @@ int CPUCtor (CPU *processor)
     processor->regs = (int*) calloc (SIZE_OF_REGS, sizeof (int));
     ERROR_INFO(processor->regs == NULL,  "Can't alloc memory\n");
 
+    for (int num = 0; num < SIZE_OF_REGS; num++)
+        processor->regs[num] = num;
+
     return 0;
+}
+
+int CPUDtor (CPU *processor)
+{
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+    ERROR_INFO(processor->ip == -1, "Repeated CPUDtor\n");
+
+    stackDtor (processor->stk);
+    free (processor->stk); free (processor->code);
+    free (processor->RAM); free (processor->regs);
+    processor->ip = -1;
+
+    return 0;    
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-int funcDef (CPU *processor)
+int DOFunc (CPU *processor)
 {
-    switch ((int)processor->code[processor->ip])
+    int func = *(int*)(processor->code + processor->ip);
+    
+    int funcNum = 0;
+
+    for (int num = 4; num >= 0; num--)
+        funcNum += ((func >> num) & 1u) * pow_mod (2, num);
+    
+    if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
+    {    
+        int regNum = *(int*)(processor->code + processor->ip + 1);
+        int val = *(int*)(processor->code + processor->ip + 1);
+
+        int error = RealizeFunc (processor, funcNum, processor->regs[regNum] + val, func);
+        ERROR_INFO(error == 404, "There is no such function\n");
+
+        processor->ip += 9;
+
+        return error;
+    }
+
+    else if ((((func >> 6) & 1u) == 1))
+    {
+        int regNum = *(int*)(processor->code + processor->ip + 1);
+
+        int error = RealizeFunc (processor, funcNum, processor->regs[regNum], func);
+        ERROR_INFO(error == 404, "There is no such function\n");
+
+        processor->ip += 5;
+
+        return error; 
+    }
+
+    else if ((((func >> 5) & 1u) == 1))
+    {
+        int val = *(int*)(processor->code + processor->ip + 1);
+
+        int error = RealizeFunc (processor, funcNum, val, func);
+        ERROR_INFO(error == 404, "There is no such function\n");
+
+        processor->ip += 5;
+
+        return error;
+    }
+    
+    else
+    {    
+        int NOval = 0;
+
+        int error = RealizeFunc (processor, funcNum, NOval, func);
+        ERROR_INFO(error == 404, "There is no such function\n");
+
+        processor->ip += 1;
+    
+        return error;
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int RealizeFunc (CPU *processor, int funcNum, int value, int func)
+{
+    switch (funcNum)
     {
         case 1:
         {    
-            stackPush (processor->stk, (int)processor->code[processor->ip + 1]);
-            processor->ip += 5;
+            push (processor, value, func);
             return 0;
         }
 
         case 2:
         {    
             add (processor->stk);
-            processor->ip += 1;
             return 0;
         }
 
         case 3:
         {    
             sub (processor->stk);
-            processor->ip += 1;
             return 0;
         }
 
         case 4:
         {    
             mul (processor->stk);
-            processor->ip += 1;
             return 0;
         }
 
         case 5:
         {    
             div (processor->stk);
-            processor->ip += 1;
             return 0;
         }
 
         case 6:
         {    
             out (processor->stk);
-            processor->ip += 1;
+            return 0;
+        }
+
+        case 7:
+        {
+            pop (processor, value, func);
             return 0;
         }
 
@@ -91,40 +170,27 @@ int funcDef (CPU *processor)
 
 int arrayCtor (CPU *processor, char *str)
 {
-    char *ptr_line = str; int func_code = 1, num = 0, ind = 0;
-    while (func_code != 0)
+    char *ptr_line = str; 
+    int num = 0;
+
+    while (str[num] != '\0')
     {    
         if (str[num] == '\n')
-        {    
-            str[num] = '\0';
-
-            int value = 0;
-        
-            sscanf (ptr_line, "%d %d", &func_code, &value);
-
-            if (func_code == 1)
-            {
-                processor->code[ind] = (char)func_code; 
-                *(int *)(processor->code + ind + 1) = value;
-                ind += 5;
-            }
-            else
-            {
-                processor->code[ind] = (char)func_code;
-                ind++;
-            }
+        {   
+            CPUFuncDef (processor, ptr_line);
 
             ptr_line = str + num + 1;
-            str[num] = '\n';
         }
 
         num++;
     }
 
-    for (num = 0; num < ind; num++)
+    for (num = 0; num < processor->ip; num++)
     {
         printf ("%d\n", processor->code[num]);
     }
+
+    processor->ip = 0;
 
     return 0;
 }
@@ -132,6 +198,76 @@ int arrayCtor (CPU *processor, char *str)
 
 //-----------------------------------------------------------------------------
 
+
+
+int CPUFuncDef (CPU *processor, const char *ptr_line)
+{
+    int func = 0;
+    sscanf (ptr_line, "%d", &func);
+
+    if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
+    {    
+        int regNum = 0, val = 0;
+        sscanf (ptr_line, "%d %d %d", &func, &regNum, &val);
+
+        processor->code[processor->ip] = (char) func;
+        *(int*)(processor->code + processor->ip + 1) = regNum;
+        *(int*)(processor->code + processor->ip + 5) = val;
+
+        processor->ip += 9;
+
+        return 0;
+    }
+
+    else if ((((func >> 6) & 1u) == 1))
+    {
+        int regNum = 0;
+        sscanf (ptr_line, "%d %d", &func, &regNum);
+
+        processor->code[processor->ip] = (char) func;
+        *(int*)(processor->code + processor->ip + 1) = regNum;
+
+        processor->ip += 5;
+
+        return 0;   
+    }
+
+    else if ((((func >> 5) & 1u) == 1))
+    {
+        int val = 0;
+        sscanf (ptr_line, "%d %d", &func, &val);
+
+        processor->code[processor->ip] = (char) func;
+        *(int*)(processor->code + processor->ip + 1) = val;
+
+        processor->ip += 5;
+
+        return 0;   
+    }
+
+    else
+    {
+        processor->code[processor->ip] = (char) func;
+
+        processor->ip += 1;
+
+        return 0;
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int push (CPU *processor, int value, int func)
+{
+    if (((func >> 7) & 1u) == 1)
+        stackPush (processor->stk, processor->RAM[value]);
+    else
+        stackPush (processor->stk, value);
+
+    return 0;
+}
 
 int add (Stack *stk)
 {
@@ -157,7 +293,62 @@ int div (Stack *stk)
 
 int out (Stack *stk)
 {
+
     printf ("%d\n", stk->data[stk->Size]); 
-    stackPop (stk);
+    //stackPop (stk);
+
     return 0;   
+}
+
+int pop (CPU *processor, int value, int func)
+{
+    if (((func >> 7) & 1u) == 1)
+        processor->RAM[value] = processor->stk->data[processor->stk->Size];
+    else    
+        processor->regs[value] = processor->stk->data[processor->stk->Size];
+    
+    stackPop (processor->stk);
+
+    return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+unsigned long long pow_mod (unsigned long long n, unsigned long long k) 
+{
+    unsigned long long mult = n;
+    unsigned long long prod = 1;
+    while (k > 0) 
+    {
+        if ((k % 2) == 1) 
+        {
+            prod = mult_mod (prod, mult); k = k - 1;
+        }
+        
+        mult = mult_mod (mult, mult); k = k / 2;
+    }
+    
+    return prod;
+}
+
+
+unsigned long long mult_mod (unsigned long long n, unsigned long long k) 
+{
+    unsigned long long mult = n;
+    unsigned long long prod = 0;
+    while (k > 0) 
+    {
+        if ((k % 2) == 1) 
+        {
+            prod = prod + mult; 
+            k = k - 1;
+        }
+    
+        mult = mult + mult; 
+        k = k / 2;
+    }
+    
+    return prod;
 }

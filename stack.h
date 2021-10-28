@@ -8,22 +8,25 @@
 #include <sys/stat.h>
 #include "all_hashs.h"
 
-#ifndef IS_STACK_OK
-#define IS_STACK_OK do {                                                                                                                                                 \
-                        int error = 0;                                                                                                                                   \
-                        if ((error = CHECK_ERRORS (st)) != 0)                                                                                                            \
-                        {                                                                                                                                                \
-                            printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);                                                              \
-                            printf ("Stack:\n");                                                                                                                         \
-                            printStack (st);                                                                                                                             \
-                            printf ("                 Left stack canary  Right stack canary  Left data canary  Right data canary  Data hash  Capacity hash  Size hash\n" \
-                                    "Expexted values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n"      \
-                                    "Received values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n",     \
-                                    CANARY, CANARY, CANARY, CANARY, hash_data, hash_capacity, hash_size,                                                                 \
-                                    st->leftCanary, st->rightCanary, *(canary_t*)(st->data - 1), *(canary_t*)(st->data + st->capacity + 1),                              \
-                                    TEMPLATE_HASH(Hash, int) (st->data), TEMPLATE_HASH(Hash, size_t) (&st->capacity), TEMPLATE_HASH(Hash, size_t) (&st->Size));          \
-                        }                                                                                                                                                \
-                    } while (0)
+#ifndef CHECK_STACK
+#define CHECK_STACK do{                                                                                                                                             \
+                int error = 0;                                                                                                                                      \
+                if ((error = stackOK(st)) != 0)                                                                                                                     \
+                {                                                                                                                                                   \
+                    stackDump (error);                                                                                                                              \
+                    printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);                                                                 \
+                    printf ("Stack:\n");                                                                                                                            \
+                    /*printf ("%ld\n", st->Size); */                                                                                                                    \
+                    prinStack (st);                                                                                                                                \
+                    printf ("                 Left stack canary  Right stack canary  Left data canary  Right data canary  Data hash  Capacity hash  Size hash\n"    \
+                            "Expexted values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n"         \
+                            "Received values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n",        \
+                            CANARY, CANARY, CANARY, CANARY, hash_data, hash_capacity, hash_size,                                                                    \
+                            st->leftCanary, st->rightCanary, *(canary_t*)(st->data - 1), *(canary_t*)(st->data + st->capacity + 1),                                 \
+                            TEMPLATE_HASH(Hash, int) (st->data), TEMPLATE_HASH(Hash, size_t) (&st->capacity), TEMPLATE_HASH(Hash, size_t) (&st->Size));             \
+                    /*abort ();*/                                                                                                                                   \
+                }                                                                                                                                                   \
+            } while (0)
 #endif
 
 #ifndef ERROR_INFO
@@ -97,8 +100,7 @@ ERRORS stackDtor (Stack* st);
 ERRORS printStack(const Stack* st);
 ERRORS reallocate (Stack* st, size_t newSize);
 void stackDump (int error);
-ERRORS printStack (const Stack* st);
+void prinStack (const Stack* st);
 ERRORS stackOK (const Stack* st);
-int CHECK_ERRORS (const Stack* st);
 
 #endif

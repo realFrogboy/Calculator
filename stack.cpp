@@ -25,7 +25,7 @@ ERRORS stackCtor (Stack* st)
 
     CALC_HASH;
 
-    IS_STACK_OK;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -36,7 +36,7 @@ ERRORS stackCtor (Stack* st)
 
 ERRORS stackPush (Stack* st, int value)
 {
-    IS_STACK_OK;
+    CHECK_STACK;
 
     if (st->Size >= st->capacity)
         reallocate (st, st->capacity * RESIZE_COEFFICIENT); //wrong
@@ -46,7 +46,7 @@ ERRORS stackPush (Stack* st, int value)
  
     CALC_HASH;
 
-    IS_STACK_OK;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -57,9 +57,9 @@ ERRORS stackPush (Stack* st, int value)
 
 ERRORS stackPop (Stack* st)
 {
-    IS_STACK_OK;
+    CHECK_STACK;
 
-    if (st->Size <= st->capacity/RESIZE_COEFFICIENT) 
+    if ((st->Size <= st->capacity/RESIZE_COEFFICIENT) && (st->capacity != START_STACK_SIZE))
         reallocate (st, st->capacity/RESIZE_COEFFICIENT);
     
     st->data[st->Size] = POISON;
@@ -68,7 +68,7 @@ ERRORS stackPop (Stack* st)
 
     CALC_HASH;
 
-    IS_STACK_OK;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -79,7 +79,7 @@ ERRORS stackPop (Stack* st)
 
 ERRORS stackDtor (Stack* st)
 {
-    IS_STACK_OK;
+    CHECK_STACK;
 
     free (--st->data);
     st->Size = -1;
@@ -93,7 +93,7 @@ ERRORS stackDtor (Stack* st)
 
 ERRORS reallocate (Stack* st, const size_t newSize) //static
 {
-    IS_STACK_OK;
+    CHECK_STACK;
 
     st->capacity = newSize;
     st->data--;
@@ -111,7 +111,7 @@ ERRORS reallocate (Stack* st, const size_t newSize) //static
 
     CALC_HASH;
 
-    IS_STACK_OK;
+    CHECK_STACK;
 
     return NO_ERRORS;
 }
@@ -216,36 +216,12 @@ ERRORS stackOK (const Stack* st)
 //-----------------------------------------------------------------------------
 
 
-int CHECK_ERRORS (const Stack* st)
+void prinStack (const Stack* st)
 {
-    int error = 0;
-    if ((error = stackOK(st)) != 0)
-    {
-        stackDump (error);
-        return error;
-    }
-
-    return NO_ERRORS;
-}
-
-
-//-----------------------------------------------------------------------------
-
-
-ERRORS printStack (const Stack* st)
-{
-    IS_STACK_OK;
-
     for (unsigned num = st->Size; num >= 1; num--)
     {
         printf ("%d\n", *(st->data + num));
     }
 
     printf ("%ld --- %ld\n", st->Size, st->capacity);
-
-    CALC_HASH;
-
-    IS_STACK_OK;
-
-    return NO_ERRORS;
 }

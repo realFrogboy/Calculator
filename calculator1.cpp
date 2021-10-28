@@ -27,17 +27,17 @@ int main ()
     char *str = (char*) calloc (file_info.st_size, sizeof (char));
     ERROR_INFO(str == NULL,  "Can't alloc memory\n");
 
-    int nReaded = fread (str, file_info.st_size, sizeof (char), input);
-    ERROR_INFO(nReaded == file_info.st_size, "Can't read file\n");
+    int nReaded = fread (str, sizeof (char), file_info.st_size, input);
+    ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
 
     arrayCtor (&processor, str);
 
     while ((int)processor.code[processor.ip])
-        ERROR_INFO(funcDef (&processor) == 404, "There is no such function\n");
+    {
+        DOFunc (&processor);
+    }
 
-    stackDtor (processor.stk);
-    free (processor.stk); free (processor.code);
-    free (processor.RAM); free (processor.regs);
+    CPUDtor (&processor);
     free (str);
     fclose (input);
 
