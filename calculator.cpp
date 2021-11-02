@@ -4,10 +4,13 @@ int CPUCtor (CPU *processor)
 {
     ERROR_INFO(processor == NULL, "Void ptr on processor\n");
 
-    processor->stk = (Stack*) calloc (STACK_SIZE, sizeof (int));
-    ERROR_INFO(processor->code == NULL,  "Can't alloc memory\n");
+    processor->stk = (Stack*) calloc (STACK_SIZE, sizeof (Stack));
+    ERROR_INFO(processor->stk == NULL,  "Can't alloc memory\n");
 
     stackCtor (processor->stk);
+
+    processor->label = (int*) calloc (NUM_OF_LABELS, sizeof (int));
+    ERROR_INFO(processor->label == NULL, "Can't alloc memory\n");
 
     processor->ip = 0;
 
@@ -32,8 +35,10 @@ int CPUDtor (CPU *processor)
     ERROR_INFO(processor->ip == -1, "Repeated CPUDtor\n");
 
     stackDtor (processor->stk);
+    
     free (processor->stk); free (processor->code);
     free (processor->RAM); free (processor->regs);
+    free (processor->label);
     processor->ip = -1;
 
     return 0;    
@@ -111,7 +116,7 @@ int RealizeFunc (CPU *processor, int funcNum, int value, int func)
     switch (funcNum)
     {
         case 1:
-        {    
+        {   
             push (processor, value, func);
             return 0;
         }
@@ -202,7 +207,20 @@ int arrayCtor (CPU *processor, char *str)
 
 int CPUFuncDef (CPU *processor, const char *ptr_line)
 {
-    int func = 0;
+    int func = 0, ver = 0;
+
+    sscanf (ptr_line, ":%d%n", &func, &ver);
+    if (ver)
+    {
+        for (int num = 0; num < NUM_OF_LABELS; num++)
+        {
+            if (num == func)
+                processor->label[num] = processor->ip;
+        }
+
+        return 0;
+    }
+
     sscanf (ptr_line, "%d", &func);
 
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
@@ -248,7 +266,6 @@ int CPUFuncDef (CPU *processor, const char *ptr_line)
     else
     {
         processor->code[processor->ip] = (char) func;
-
         processor->ip += 1;
 
         return 0;
@@ -295,7 +312,7 @@ int out (Stack *stk)
 {
 
     printf ("%d\n", stk->data[stk->Size]); 
-    //stackPop (stk);
+    stackPop (stk);
 
     return 0;   
 }

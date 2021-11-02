@@ -12,14 +12,16 @@
                         } while (0)
 #endif
 
-const int SIZE_OF_CODE = 200;
-const int STACK_SIZE   = 1000;
-const int SIZE_OF_RAM  = 50;
-const int SIZE_OF_REGS = 5;
+const int SIZE_OF_CODE    = 200;   //processor.code size
+const int STACK_SIZE      = 4000;  //processor.stk size
+const int SIZE_OF_RAM     = 50;    //processor.RAM size
+const int SIZE_OF_REGS    = 5;     //processor.regs size
+const int NUM_OF_LABELS   = 5;     //label[?]
 
 struct CPU 
 {
     struct Stack *stk;
+    int *label;
     char *code;
     int ip;
     int *RAM;

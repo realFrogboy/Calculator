@@ -15,6 +15,18 @@
 } while (0)
 #endif
 
+struct Labels
+{
+    char *name;
+    int position;
+};
+
+const int NUM_OF_LABELS   = 5;
+const int LABEL_NAME_SIZE = 10;
+
+int LabelsCtor (Labels *label);
+int LabelsDtor (Labels *label);
+
 int AssFuncDef (const char *func);
 int placeReg (char reg, int *res);
 char* scanLine (const char *ptr_line);

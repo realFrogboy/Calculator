@@ -1,5 +1,7 @@
 #include "assembler.h"
 
+struct Labels *label;
+
 char* scanLine (const char *ptr_line)
 {
     char reg = '\0', func[10] = "";
@@ -9,6 +11,17 @@ char* scanLine (const char *ptr_line)
     ERROR_INFO(str == NULL, "Can't alloc memory\n");
 
     sprintf (str, "%s", "bad");
+
+    sscanf (ptr_line, ":%s%n", func, &ver);
+    if (ver)
+    {
+        static int count = 0;
+        strcpy (label[count].name, func);
+
+        sprintf (str, ":%d", count++);
+
+        return str;
+    }
      
     sscanf (ptr_line, "%s [%cx + %d]%n", func, &reg, &value, &ver);
     if (ver)
@@ -121,6 +134,10 @@ int convertFuncIntoNumber (char *str, FILE *output)
 {
     char *ptr_line = str;
     int num = 0;
+    label = (Labels*) calloc(NUM_OF_LABELS, sizeof (Labels));
+    ERROR_INFO(label == NULL, "Can't alloc memory\n");
+    
+    LabelsCtor (label);
 
     while (str[num] != '\0')
     {    
@@ -139,6 +156,13 @@ int convertFuncIntoNumber (char *str, FILE *output)
 
         num++;
     }
+
+    for (num = 0; num < NUM_OF_LABELS; num++)
+        printf ("%s----\n", label[num].name);
+
+    LabelsDtor(label);
+
+    free (label);
 
     return 0;
 }
@@ -195,4 +219,44 @@ int placeReg (char reg, int *res)
         ERROR_INFO (reg != '\0', "There is no such register\n");
     
     return regNum;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int LabelsCtor (Labels *strc)
+{
+    ERROR_INFO(strc == NULL, "Void ptr on label\n");
+
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+    {
+        strc[num].name = (char*) calloc (LABEL_NAME_SIZE, sizeof (char));
+        ERROR_INFO(strc[num].name == NULL, "Can't alloc memeory\n");
+        strc[num].position = 0;
+    }
+
+    return 0;
+}
+
+int LabelsDtor (Labels *strc)
+{
+    ERROR_INFO(strc == NULL, "Void ptr on label\n");
+
+    FILE* label_file = fopen ("lebel.txt", "wb");
+    ERROR_INFO(label_file == NULL, "Can't open file\n");
+
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+    {
+        ERROR_INFO(strc[num].position == -1, "Repeated LabelsDtor\n");
+
+        fprintf (label_file, "%s - %d\n", strc[num].name, num);
+
+        free (strc[num].name);
+        strc[num].position = -1;
+    }
+
+    fclose (label_file);
+
+    return 0;
 }
