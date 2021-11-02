@@ -1,8 +1,10 @@
 #include "assembler.h"
 
+struct Labels *label;
+
 char* DisFuncDef (const char *ptr_line)
-{
-    int funcNum = 0, func = 0, regNum = 0, val = 0;
+{   
+    int funcNum = 0, func = 0, regNum = 0, val = 0, ver = 0;
 
     char *str = (char*) calloc (100, sizeof (char));
     ERROR_INFO(str == NULL, "Can't alloc memory\n");
@@ -10,6 +12,18 @@ char* DisFuncDef (const char *ptr_line)
     char *name_of_func = (char*) calloc (10, sizeof (char));
     ERROR_INFO(name_of_func == NULL, "Can't alloc memory\n");
 
+    sscanf (ptr_line, ":%d%n", &func, &ver);
+    if (ver)
+    {
+        for (int num = 0; num < NUM_OF_LABELS; num++)
+        {
+            if (num == func)
+                sprintf (str, ": %s", label[num].name);
+        }
+
+        return str;
+    }
+    
     sscanf (ptr_line, "%d", &func);
 
     for (int num = 4; num >= 0; num--)
@@ -130,6 +144,15 @@ char* defineName (int funcNum)
 
 int convertNumberIntoFunc (char *str, FILE *output)
 {
+    label = (Labels*) calloc(NUM_OF_LABELS, sizeof (Labels));
+    ERROR_INFO(label == NULL, "Can't alloc memory\n");
+    
+    LabelsCtor (label);
+    fill_labels (label);
+
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+        printf ("%s----\n", label[num].name);
+
     char *ptr_line = str;
     int num = 0;
 
@@ -151,6 +174,48 @@ int convertNumberIntoFunc (char *str, FILE *output)
 
         num++;
     }
+
+    LabelsDtor (label);
+    free (label);
+
+    return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int fill_labels (Labels *strc)
+{
+    FILE *label_file = fopen ("lebel.txt", "r");
+    ERROR_INFO(label_file == NULL, "Can't open file\n");
+
+    char *str = transform_file_to_str (label_file);
+
+    char *ptr_line = str;
+    int num = 0;
+
+    while (str[num] != '\0')
+    {    
+        if (str[num] == '\n')
+        {    
+            char name[10] = "";
+            int pos = 0;
+
+            sscanf (ptr_line, "%s - %d", name, &pos);
+            printf ("%s,,,,,%d\n", name, pos);
+
+            if (strcmp (name, "-"))
+                strcpy (strc[pos].name, name);
+
+            ptr_line = str + num + 1;
+        }
+
+        num++;
+    }
+
+    free (str);
+    fclose (label_file);
 
     return 0;
 }
@@ -194,4 +259,66 @@ unsigned long long mult_mod (unsigned long long n, unsigned long long k)
     }
     
     return prod;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+char* transform_file_to_str (FILE *input)
+{
+    struct stat file_info;
+
+    int fd = fileno (input);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
+
+    char *str = (char*) calloc (file_info.st_size, sizeof (char));
+    ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
+
+    int nReaded = fread (str, sizeof (char), file_info.st_size, input);
+    ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
+
+    return str;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+int LabelsCtor (Labels *strc)
+{
+    ERROR_INFO(strc == NULL, "Void ptr on label\n");
+
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+    {
+        strc[num].name = (char*) calloc (LABEL_NAME_SIZE, sizeof (char));
+        ERROR_INFO(strc[num].name == NULL, "Can't alloc memeory\n");
+        strc[num].position = -2;
+    }
+
+    return 0;
+}
+
+int LabelsDtor (Labels *strc)
+{
+    ERROR_INFO(strc == NULL, "Void ptr on label\n");
+
+    FILE* label_file = fopen ("lebel.txt", "wb");
+    ERROR_INFO(label_file == NULL, "Can't open file\n");
+
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+    {
+        ERROR_INFO(strc[num].position == -1, "Repeated LabelsDtor\n");
+
+        fprintf (label_file, "%s - %d\n", strc[num].name, num);
+
+        free (strc[num].name);
+        strc[num].position = -1;
+    }
+
+    fclose (label_file);
+
+    return 0;
 }

@@ -4,7 +4,7 @@ int CPUCtor (CPU *processor)
 {
     ERROR_INFO(processor == NULL, "Void ptr on processor\n");
 
-    processor->stk = (Stack*) calloc (STACK_SIZE, sizeof (Stack));
+    processor->stk = (Stack*) calloc (1, sizeof (Stack));
     ERROR_INFO(processor->stk == NULL,  "Can't alloc memory\n");
 
     stackCtor (processor->stk);
@@ -368,4 +368,26 @@ unsigned long long mult_mod (unsigned long long n, unsigned long long k)
     }
     
     return prod;
+}
+
+
+//-----------------------------------------------------------------------------
+
+
+char* transform_file_to_str (FILE *input)
+{
+    struct stat file_info;
+
+    int fd = fileno (input);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
+
+    char *str = (char*) calloc (file_info.st_size, sizeof (char));
+    ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
+
+    int nReaded = fread (str, sizeof (char), file_info.st_size, input);
+    ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
+
+    return str;
 }

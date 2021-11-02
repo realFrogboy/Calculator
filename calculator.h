@@ -28,6 +28,8 @@ struct CPU
     int *regs;
 };
 
+char* transform_file_to_str (FILE *input);
+
 int arrayCtor (CPU *processor, char *str);
 int CPUFuncDef (CPU *processor, const char *ptr_line);
 
