@@ -26,6 +26,18 @@ int main ()
     while ((int)processor.code[processor.ip])
     {
         DOFunc (&processor);
+        /*printf ("================\n");
+        //prinStack (processor.stk_for_call);
+        prinStack (processor.stk);
+        printf ("----------------\n");
+        printf ("%d\n", processor.ip);
+        //printf ("&&&&&&&&&&&&&&&&\n");
+        //for (int num = 0; num < 5; num++)
+        //{
+        //    printf ("%d,  ", processor.regs[num]);
+        //    printf ("\n");
+        //}
+        printf ("================\n");*/
     }
 
     CPUDtor (&processor);

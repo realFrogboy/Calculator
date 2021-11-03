@@ -7,12 +7,32 @@
 #include <string.h> 
 
 #ifndef ERROR_INFO
-#define ERROR_INFO(statement, text) do {                                                \
-    if (statement) {                                                                    \
-        printf (" %s:%d, IN FUNCTION %s:\n", __FILE__, __LINE__, __PRETTY_FUNCTION__);  \
-        printf (#text);                                                                 \
-    }                                                                                   \
-} while (0)
+#define ERROR_INFO(statement, text) do {                                                                                    \
+                                        if (statement) {                                                                    \
+                                            printf (" %s:%d, IN FUNCTION %s:\n", __FILE__, __LINE__, __PRETTY_FUNCTION__);  \
+                                            printf (#text);                                                                 \
+                                        }                                                                                   \
+                                    } while (0)
+#endif
+
+#ifndef PASS
+#define PASS do {                                                              \
+                int num = 1;                                                   \
+                char *ptr_line = str;                                          \
+                while (str[num - 1] != '\0')                                   \
+                {                                                              \
+                    if ((str[num] == '\n') || (str[num] == '\0'))              \
+                    {                                                          \
+                        char *out = (char*) calloc (100, sizeof (char));       \
+                        ERROR_INFO(out == NULL, "Can't alloc memeory\n");      \
+                        out = scanLine (ptr_line);                             \
+                        fprintf (output, "%s\n", out);                         \
+                        ptr_line = str + num + 1;                              \
+                        free (out);                                            \
+                    }                                                          \
+                num++;                                                         \
+                }                                                              \
+            }while (0)
 #endif
 
 struct Labels
@@ -21,8 +41,8 @@ struct Labels
     int position;
 };
 
-const int NUM_OF_LABELS   = 5;
-const int LABEL_NAME_SIZE = 10;
+const int NUM_OF_LABELS   = 10;
+const int LABEL_NAME_SIZE = 20;
 
 int LabelsCtor (Labels *label);
 int LabelsDtor (Labels *label);

@@ -57,6 +57,16 @@ char* DisFuncDef (const char *ptr_line)
     {
         sscanf (ptr_line, "%d %d", &func, &val);
 
+        if ((funcNum >= 8) && (funcNum <=15))                               // FOR FUNCTIONS WITH LABELS
+        {                                                                   // 
+            for (int num = 0; num < NUM_OF_LABELS; num++)                   //
+                if (num == val)                                             //
+                {                                                           // FOR FUNCTIONS WITH LABELS
+                    sprintf (str, "%s :: %s", name_of_func, label[num].name);//
+                    return str;                                             //
+                }                                                           //
+        }                                                                   // FOR FUNCTIONS WITH LABELS
+
         (((func >> 7) & 1u) == 1) ? sprintf (str, "%s [%d]", name_of_func, val) : sprintf (str, "%s %d", name_of_func, val);
 
         return str;   
@@ -126,6 +136,60 @@ char* defineName (int funcNum)
         case 7:
         {
             strcpy (res, "pop");
+            return res;
+        }
+
+        case 8:
+        {
+            strcpy (res, "jmp");
+            return res;
+        }
+
+        case 9:
+        {
+            strcpy (res, "ja");
+            return res;
+        }
+
+        case 10:
+        {
+            strcpy (res, "jae");
+            return res;
+        }
+
+        case 11:
+        {
+            strcpy (res, "jb");
+            return res;
+        }
+
+        case 12:
+        {
+            strcpy (res, "jbe");
+            return res;
+        }
+
+        case 13:
+        {
+            strcpy (res, "je");
+            return res;
+        }
+
+        case 14:
+        {
+            strcpy (res, "jne");
+            return res;
+        }
+
+        case 15:
+        {
+            strcpy (res, "call");
+            return res;
+        }
+
+        case 16:
+        {
+            strcpy (res, "ret");
             return res;
         }
         

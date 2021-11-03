@@ -1,10 +1,12 @@
 #include "assembler.h"
 
 struct Labels *label;
+int THE_SECOND_PASS = 0;
+int count = 1;
 
 char* scanLine (const char *ptr_line)
 {
-    char reg = '\0', func[10] = "";
+    char reg = '\0', func[10] = "", lab[10] = "";
     int value = 0, ver = 0, res = 404;
     
     char *str = (char*) calloc (100, sizeof (char));
@@ -12,11 +14,10 @@ char* scanLine (const char *ptr_line)
 
     sprintf (str, "%s", "bad");
 
-    sscanf (ptr_line, ":%s%n", func, &ver);
+    sscanf (ptr_line, ":%s%n", lab, &ver);
     if (ver)
     {
-        static int count = 0;
-        strcpy (label[count].name, func);
+        strcpy (label[count].name, lab);
 
         sprintf (str, ":%d", count++);
 
@@ -109,6 +110,28 @@ char* scanLine (const char *ptr_line)
 
         return str;  
     }
+
+    sscanf (ptr_line, "%s :: %s%n", func, lab, &ver);
+    if (ver)
+    {
+        res = AssFuncDef (func);
+        ERROR_INFO(res == 404, "There is no such function\n");
+
+        res = res | (1u << 5);
+
+        for (int num = 1; num < NUM_OF_LABELS; num++)
+        {
+            if (strcmp (lab, label[num].name) == 0)
+                value = num;
+        }
+
+        if (value == 0)
+            THE_SECOND_PASS = 1; // do assembler 2 times
+
+        sprintf (str, "%d %d", res, value);
+
+        return str;
+    }
      
     sscanf (ptr_line, "%s%n", func, &ver);
     if (ver)
@@ -132,32 +155,25 @@ char* scanLine (const char *ptr_line)
 
 int convertFuncIntoNumber (char *str, FILE *output)
 {
-    char *ptr_line = str;
-    int num = 0;
     label = (Labels*) calloc(NUM_OF_LABELS, sizeof (Labels));
     ERROR_INFO(label == NULL, "Can't alloc memory\n");
     
     LabelsCtor (label);
 
-    while (str[num] != '\0')
-    {    
-        if (str[num] == '\n')
-        {    
-            char *out = (char*) calloc (100, sizeof (char));
-            ERROR_INFO(out == NULL, "Can't alloc memeory\n");
+    PASS;
 
-            out = scanLine (ptr_line);
+    if (THE_SECOND_PASS == 1)
+    {
+        count = 1;
 
-            fprintf (output, "%s\n", out);
+        fclose (output);
+        output = fopen ("code.txt", "wb");
+        ERROR_INFO(output == NULL, "Can't open output file\n");
 
-            ptr_line = str + num + 1;
-            free (out);
-        }
-
-        num++;
+        PASS;
     }
 
-    for (num = 0; num < NUM_OF_LABELS; num++)
+    for (int num = 0; num < NUM_OF_LABELS; num++)
         printf ("%s----\n", label[num].name);
 
     LabelsDtor(label);
@@ -199,6 +215,33 @@ int AssFuncDef (const char *func)
     else if (strcmp ("pop", func) == 0)
         res = 7;
     
+    else if (strcmp ("jmp", func) == 0)
+        res = 8;
+    
+    else if (strcmp ("ja", func) == 0)
+        res = 9;
+    
+    else if (strcmp ("jae", func) == 0)
+        res = 10;
+    
+    else if (strcmp ("jb", func) == 0)
+        res = 11;
+    
+    else if (strcmp ("jbe", func) == 0)
+        res = 12;
+    
+    else if (strcmp ("je", func) == 0)
+        res = 13;
+    
+    else if (strcmp ("jne", func) == 0)
+        res = 14;
+    
+    else if (strcmp ("call", func) == 0)
+        res = 15;
+    
+    else if (strcmp ("ret", func) == 0)
+        res = 16;
+
     return res;    
 }
 

@@ -1,5 +1,7 @@
 #include "calculator.h"
 
+int regNum = 0;
+
 int CPUCtor (CPU *processor)
 {
     ERROR_INFO(processor == NULL, "Void ptr on processor\n");
@@ -8,6 +10,11 @@ int CPUCtor (CPU *processor)
     ERROR_INFO(processor->stk == NULL,  "Can't alloc memory\n");
 
     stackCtor (processor->stk);
+
+    processor->stk_for_call = (Stack*) calloc (1, sizeof (Stack));
+    ERROR_INFO(processor->stk_for_call == NULL,  "Can't alloc memory\n");
+
+    stackCtor (processor->stk_for_call);
 
     processor->label = (int*) calloc (NUM_OF_LABELS, sizeof (int));
     ERROR_INFO(processor->label == NULL, "Can't alloc memory\n");
@@ -35,10 +42,11 @@ int CPUDtor (CPU *processor)
     ERROR_INFO(processor->ip == -1, "Repeated CPUDtor\n");
 
     stackDtor (processor->stk);
+    stackDtor (processor->stk_for_call);
     
-    free (processor->stk); free (processor->code);
-    free (processor->RAM); free (processor->regs);
-    free (processor->label);
+    free (processor->stk); free (processor->stk_for_call);
+    free (processor->code); free (processor->RAM); 
+    free (processor->regs); free (processor->label);
     processor->ip = -1;
 
     return 0;    
@@ -59,7 +67,7 @@ int DOFunc (CPU *processor)
     
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
     {    
-        int regNum = *(int*)(processor->code + processor->ip + 1);
+        regNum = *(int*)(processor->code + processor->ip + 1);
         int val = *(int*)(processor->code + processor->ip + 1);
 
         int error = RealizeFunc (processor, funcNum, processor->regs[regNum] + val, func);
@@ -72,7 +80,7 @@ int DOFunc (CPU *processor)
 
     else if ((((func >> 6) & 1u) == 1))
     {
-        int regNum = *(int*)(processor->code + processor->ip + 1);
+        regNum = *(int*)(processor->code + processor->ip + 1);
 
         int error = RealizeFunc (processor, funcNum, processor->regs[regNum], func);
         ERROR_INFO(error == 404, "There is no such function\n");
@@ -153,12 +161,72 @@ int RealizeFunc (CPU *processor, int funcNum, int value, int func)
 
         case 7:
         {
+            if (((func >> 7) & 1u) == 1)
+                value = value;
+            else   
+                value = regNum; 
+    
             pop (processor, value, func);
+            return 0;
+        }
+
+        case 8:
+        {
+            jmp (processor, value);
+            return 0;
+        }
+
+        case 9:
+        {
+            ja (processor, value);
+            return 0;
+        }
+
+        case 10:
+        {
+            jae (processor, value);
+            return 0;
+        }
+
+        case 11:
+        {
+            jb (processor, value);
+            return 0;
+        }
+
+        case 12:
+        {
+            jbe (processor, value);
+            return 0;
+        }
+
+        case 13:
+        {
+            je (processor, value);
+            return 0;
+        }
+
+        case 14:
+        {
+            jne (processor, value);
+            return 0;
+        }
+
+        case 15:
+        {
+            call (processor, value);
+            return 0;
+        }
+
+        case 16:
+        {
+            ret (processor);
             return 0;
         }
 
         case 0:
         {    
+            //hlt
             return 0;
         }
 
@@ -183,18 +251,23 @@ int arrayCtor (CPU *processor, char *str)
         if (str[num] == '\n')
         {   
             CPUFuncDef (processor, ptr_line);
-
             ptr_line = str + num + 1;
         }
 
         num++;
     }
 
+    CPUFuncDef (processor, ptr_line);
+
     for (num = 0; num < processor->ip; num++)
     {
         printf ("%d\n", processor->code[num]);
     }
 
+    for (int num = 0; num < NUM_OF_LABELS; num++)
+        printf ("%d,  ", processor->label[num]);
+
+    printf ("\n");
     processor->ip = 0;
 
     return 0;
@@ -212,7 +285,7 @@ int CPUFuncDef (CPU *processor, const char *ptr_line)
     sscanf (ptr_line, ":%d%n", &func, &ver);
     if (ver)
     {
-        for (int num = 0; num < NUM_OF_LABELS; num++)
+        for (int num = 1; num < NUM_OF_LABELS; num++)
         {
             if (num == func)
                 processor->label[num] = processor->ip;
@@ -325,6 +398,89 @@ int pop (CPU *processor, int value, int func)
         processor->regs[value] = processor->stk->data[processor->stk->Size];
     
     stackPop (processor->stk);
+
+    return 0;
+}
+
+int jmp (CPU *processor, int value)
+{
+    processor->ip = processor->label[value] - 5;
+
+    return 0;
+}
+
+int ja (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] > processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int jae (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] >= processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int jb (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] < processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int jbe (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] <= processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int je (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] == processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int jne (CPU *processor, int value)
+{
+    if (processor->stk->data[processor->stk->Size - 1] != processor->stk->data[processor->stk->Size])
+        processor->ip = processor->label[value] - 5;
+    
+    stackPop (processor->stk); stackPop (processor->stk);
+
+    return 0;
+}
+
+int call (CPU *processor, int value)
+{
+    stackPush (processor->stk_for_call, processor->ip + 5);
+    processor->ip = processor->label[value] - 5;
+
+    return 0;
+}
+
+int ret (CPU *processor)
+{
+    processor->ip = processor->stk_for_call->data[processor->stk_for_call->Size] - 1;
+    stackPop (processor->stk_for_call);
 
     return 0;
 }

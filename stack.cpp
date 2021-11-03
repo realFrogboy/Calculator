@@ -1,9 +1,5 @@
 #include "stack.h"
-#include "all_hashs.h"
-
-long long hash_data = 0;
-long long hash_capacity = 0;
-long long hash_size = 0;
+//#include "all_hashs.h"
 
 extern int DEBUG_LEVEL;
 
@@ -23,8 +19,6 @@ ERRORS stackCtor (Stack* st)
     st->rightCanary = CANARY;
     PUT_CANARY;
 
-    CALC_HASH;
-
     CHECK_STACK;
 
     return NO_ERRORS;
@@ -43,8 +37,6 @@ ERRORS stackPush (Stack* st, int value)
 
     st->Size++;
     *(st->data + st->Size) = value;
- 
-    CALC_HASH;
 
     CHECK_STACK;
 
@@ -65,8 +57,6 @@ ERRORS stackPop (Stack* st)
     st->data[st->Size] = POISON;
     
     --st->Size;
-
-    CALC_HASH;
 
     CHECK_STACK;
 
@@ -108,8 +98,6 @@ ERRORS reallocate (Stack* st, const size_t newSize) //static
         ERROR_INFO(tmp == NULL, "ERROR: Can't realloc memory\n");
 
     PUT_CANARY;
-
-    CALC_HASH;
 
     CHECK_STACK;
 
@@ -187,7 +175,7 @@ void stackDump (int error)
 //-----------------------------------------------------------------------------
 
 
-ERRORS stackOK (const Stack* st)
+ERRORS stackOK (const Stack* st, long long hash_data, long long hash_capacity, long long hash_size)
 {
     if ((DEBUG_LEVEL == 1) || (DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
@@ -218,7 +206,7 @@ ERRORS stackOK (const Stack* st)
 
 void prinStack (const Stack* st)
 {
-    for (unsigned num = st->Size; num >= 1; num--)
+    for (unsigned num = 0; num <= st->Size; num++)
     {
         printf ("%d\n", *(st->data + num));
     }

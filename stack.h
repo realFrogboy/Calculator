@@ -10,14 +10,18 @@
 
 #ifndef CHECK_STACK
 #define CHECK_STACK do{                                                                                                                                             \
+                long long hash_data = 0;                                                                                                                            \
+                long long hash_capacity = 0;                                                                                                                        \
+                long long hash_size = 0;                                                                                                                            \
+                CALC_HASH;                                                                                                                                          \
                 int error = 0;                                                                                                                                      \
-                if ((error = stackOK(st)) != 0)                                                                                                                     \
+                if ((error = stackOK(st, hash_data, hash_capacity, hash_size)) != 0)                                                                                \
                 {                                                                                                                                                   \
                     stackDump (error);                                                                                                                              \
                     printf (" %s:%d, IN FUNCTION %s:\n.", __FILE__, __LINE__, __PRETTY_FUNCTION__);                                                                 \
                     printf ("Stack:\n");                                                                                                                            \
-                    /*printf ("%ld\n", st->Size); */                                                                                                                    \
-                    prinStack (st);                                                                                                                                \
+                    /*printf ("%ld\n", st->Size); */                                                                                                                \
+                    prinStack (st);                                                                                                                                 \
                     printf ("                 Left stack canary  Right stack canary  Left data canary  Right data canary  Data hash  Capacity hash  Size hash\n"    \
                             "Expexted values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n"         \
                             "Received values: %lld               %lld                %lld              %lld               %lld       %lld           %lld\n",        \
@@ -101,6 +105,6 @@ ERRORS printStack(const Stack* st);
 ERRORS reallocate (Stack* st, size_t newSize);
 void stackDump (int error);
 void prinStack (const Stack* st);
-ERRORS stackOK (const Stack* st);
+ERRORS stackOK (const Stack* st, long long hash_data, long long hash_capacity, long long hash_size);
 
 #endif
