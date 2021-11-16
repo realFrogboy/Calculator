@@ -16,23 +16,14 @@
 #endif
 
 #ifndef PASS
-#define PASS do {                                                              \
-                int num = 1;                                                   \
-                char *ptr_line = str;                                          \
-                while (str[num - 1] != '\0')                                   \
-                {                                                              \
-                    if ((str[num] == '\n') || (str[num] == '\0'))              \
-                    {                                                          \
-                        char *out = (char*) calloc (100, sizeof (char));       \
-                        ERROR_INFO(out == NULL, "Can't alloc memeory\n");      \
-                        out = scanLine (ptr_line);                             \
-                        fprintf (output, "%s\n", out);                         \
-                        ptr_line = str + num + 1;                              \
-                        free (out);                                            \
-                    }                                                          \
-                num++;                                                         \
-                }                                                              \
-            }while (0)
+#define PASS    char *out = (char*) calloc (100, sizeof (char));        \
+                ERROR_INFO(out == NULL, "Can't alloc memeory\n");       \
+                                                                        \
+                scanLine (ptr_line, out);                               \
+                fprintf (output, "%s\n", out);                          \
+                ptr_line = str + num + 1;                               \
+                printf ("%s\n", out);                                   \
+                free (out);                                            
 #endif
 
 struct Labels
@@ -41,7 +32,7 @@ struct Labels
     int position;
 };
 
-const int NUM_OF_LABELS   = 10;
+const int NUM_OF_LABELS   = 15;
 const int LABEL_NAME_SIZE = 20;
 
 int LabelsCtor (Labels *label);
@@ -51,7 +42,7 @@ char* transform_file_to_str (FILE *input);
 
 int AssFuncDef (const char *func);
 int placeReg (char reg, int *res);
-char* scanLine (const char *ptr_line);
+int scanLine (const char *ptr_line, char *out);
 int convertFuncIntoNumber (char *str, FILE *output);
 
 

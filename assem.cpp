@@ -4,24 +4,21 @@ struct Labels *label;
 int THE_SECOND_PASS = 0;
 int count = 1;
 
-char* scanLine (const char *ptr_line)
+int scanLine (const char *ptr_line, char *out)
 {
     char reg = '\0', func[10] = "", lab[10] = "";
     int value = 0, ver = 0, res = 404;
-    
-    char *str = (char*) calloc (100, sizeof (char));
-    ERROR_INFO(str == NULL, "Can't alloc memory\n");
 
-    sprintf (str, "%s", "bad");
+    sprintf (out, "%s", "bad");
 
     sscanf (ptr_line, ":%s%n", lab, &ver);
     if (ver)
     {
         strcpy (label[count].name, lab);
 
-        sprintf (str, ":%d", count++);
+        sprintf (out, ":%d", count++);
 
-        return str;
+        return 0;
     }
      
     sscanf (ptr_line, "%s [%cx + %d]%n", func, &reg, &value, &ver);
@@ -36,9 +33,9 @@ char* scanLine (const char *ptr_line)
 
         res = res | (1u << 7);
 
-        sprintf (str, "%d %d %d", res, regNum, value);
+        sprintf (out, "%d %d %d", res, regNum, value);
 
-        return str;
+        return 0;
     }
 
     sscanf (ptr_line, "%s %cx + %d%n", func, &reg, &value, &ver);
@@ -51,9 +48,9 @@ char* scanLine (const char *ptr_line)
 
         int regNum = placeReg (reg, &res);
 
-        sprintf (str, "%d %d %d", res, regNum, value);
+        sprintf (out, "%d %d %d", res, regNum, value);
 
-        return str;
+        return 0;
     }
     
     sscanf (ptr_line, "%s [%cx]%n", func, &reg, &ver);
@@ -66,9 +63,9 @@ char* scanLine (const char *ptr_line)
 
         res = res | (1u << 7);
 
-        sprintf (str, "%d %d", res, regNum);
+        sprintf (out, "%d %d", res, regNum);
 
-        return str;
+        return 0;
     }
 
     sscanf (ptr_line, "%s [%d]%n", func, &value, &ver);
@@ -80,9 +77,9 @@ char* scanLine (const char *ptr_line)
         res = res | (1u << 5); 
         res = res | (1u << 7);
 
-        sprintf (str, "%d %d", res, value);
+        sprintf (out, "%d %d", res, value);
 
-        return str;   
+        return 0;
     }
 
     sscanf (ptr_line, "%s %cx%n", func, &reg, &ver);
@@ -93,9 +90,9 @@ char* scanLine (const char *ptr_line)
 
         int regNum = placeReg (reg, &res);
         
-        sprintf (str, "%d %d", res, regNum);
+        sprintf (out, "%d %d", res, regNum);
 
-        return str;
+        return 0;
     }
 
     sscanf (ptr_line, "%s %d%n", func, &value, &ver);
@@ -106,9 +103,9 @@ char* scanLine (const char *ptr_line)
 
         res = res | (1u << 5); 
 
-        sprintf (str, "%d %d", res, value);
+        sprintf (out, "%d %d", res, value);
 
-        return str;  
+        return 0;
     }
 
     sscanf (ptr_line, "%s :: %s%n", func, lab, &ver);
@@ -128,9 +125,9 @@ char* scanLine (const char *ptr_line)
         if (value == 0)
             THE_SECOND_PASS = 1; // do assembler 2 times
 
-        sprintf (str, "%d %d", res, value);
+        sprintf (out, "%d %d", res, value);
 
-        return str;
+        return 0;
     }
      
     sscanf (ptr_line, "%s%n", func, &ver);
@@ -139,14 +136,14 @@ char* scanLine (const char *ptr_line)
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
 
-        sprintf (str, "%d", res);
-        
-        return str;
+        sprintf (out, "%d", res);
+
+        return 0;
     } 
     
     ERROR_INFO(ver == 0, "Incorrect input\n");
 
-    return str;
+    return 0;
 }
 
 
@@ -155,21 +152,44 @@ char* scanLine (const char *ptr_line)
 
 int convertFuncIntoNumber (char *str, FILE *output)
 {
-    label = (Labels*) calloc(NUM_OF_LABELS, sizeof (Labels));
+    label = (Labels*) calloc (NUM_OF_LABELS, sizeof (Labels));
     ERROR_INFO(label == NULL, "Can't alloc memory\n");
     
     LabelsCtor (label);
 
+    int num = 0;
+    char *ptr_line = str;
+
+    while (str[num] != '\0')
+    {
+        if (str[num] == '\n')
+        {
+            str[num] = '\0';
+            PASS;
+            str[num] = '\n';
+        }
+        num++;
+    }
     PASS;
 
     if (THE_SECOND_PASS == 1)
     {
         count = 1;
+        num = 0;
+        ptr_line = str;
 
-        fclose (output);
-        output = fopen ("code.txt", "wb");
-        ERROR_INFO(output == NULL, "Can't open output file\n");
+        freopen ("code.txt", "wb", output);
 
+        while (str[num] != '\0')
+        {
+            if (str[num] == '\n')
+            {
+                str[num] = '\0';
+                PASS;
+                str[num] = '\n';
+            }
+            num++;
+        }
         PASS;
     }
 
@@ -241,6 +261,9 @@ int AssFuncDef (const char *func)
     
     else if (strcmp ("ret", func) == 0)
         res = 16;
+    
+    else if (strcmp ("sqrt", func) == 0)
+        res = 17;
 
     return res;    
 }
@@ -276,6 +299,7 @@ int LabelsCtor (Labels *strc)
     {
         strc[num].name = (char*) calloc (LABEL_NAME_SIZE, sizeof (char));
         ERROR_INFO(strc[num].name == NULL, "Can't alloc memeory\n");
+
         strc[num].position = 0;
     }
 
@@ -285,14 +309,13 @@ int LabelsCtor (Labels *strc)
 int LabelsDtor (Labels *strc)
 {
     ERROR_INFO(strc == NULL, "Void ptr on label\n");
+    ERROR_INFO(strc[1].position == -1, "Repeated LabelsDtor\n");
 
     FILE* label_file = fopen ("lebel.txt", "wb");
     ERROR_INFO(label_file == NULL, "Can't open file\n");
 
     for (int num = 0; num < NUM_OF_LABELS; num++)
     {
-        ERROR_INFO(strc[num].position == -1, "Repeated LabelsDtor\n");
-
         fprintf (label_file, "%s - %d\n", strc[num].name, num);
 
         free (strc[num].name);
@@ -317,11 +340,13 @@ char* transform_file_to_str (FILE *input)
 
     ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
-    char *str = (char*) calloc (file_info.st_size, sizeof (char));
+    char *str = (char*) calloc (file_info.st_size + 1, sizeof (char));
     ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
 
     int nReaded = fread (str, sizeof (char), file_info.st_size, input);
     ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
+
+    str[file_info.st_size] = '\0';
 
     return str;
 }
