@@ -165,12 +165,12 @@ int convertFuncIntoNumber (char *str, FILE *output)
         if (str[num] == '\n')
         {
             str[num] = '\0';
-            PASS;
+            ASS_PASS;
             str[num] = '\n';
         }
         num++;
     }
-    PASS;
+    ASS_PASS;
 
     if (THE_SECOND_PASS == 1)
     {
@@ -185,12 +185,12 @@ int convertFuncIntoNumber (char *str, FILE *output)
             if (str[num] == '\n')
             {
                 str[num] = '\0';
-                PASS;
+                ASS_PASS;
                 str[num] = '\n';
             }
             num++;
         }
-        PASS;
+        ASS_PASS;
     }
 
     for (int num = 0; num < NUM_OF_LABELS; num++)

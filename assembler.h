@@ -15,16 +15,38 @@
                                     } while (0)
 #endif
 
-#ifndef PASS
-#define PASS    char *out = (char*) calloc (100, sizeof (char));        \
-                ERROR_INFO(out == NULL, "Can't alloc memeory\n");       \
-                                                                        \
-                scanLine (ptr_line, out);                               \
-                fprintf (output, "%s\n", out);                          \
-                ptr_line = str + num + 1;                               \
-                printf ("%s\n", out);                                   \
-                free (out);                                            
+#ifndef ASS_PASS
+#define ASS_PASS    char *out = (char*) calloc (100, sizeof (char));        \
+                    ERROR_INFO(out == NULL, "Can't alloc memeory\n");       \
+                                                                            \
+                    scanLine (ptr_line, out);                               \
+                                                                            \
+                    fprintf (output, "%s\n", out);                          \
+                    ptr_line = str + num + 1;                               \
+                    free (out);                                            
 #endif
+
+#ifndef DIS_PASS
+#define DIS_PASS    char *out = (char*) calloc (100, sizeof (char));        \
+                    ERROR_INFO(out == NULL, "Can't alloc memory\n");        \
+                                                                            \
+                    DisFuncDef (ptr_line, out);                             \
+                                                                            \
+                    fprintf (output, "%s\n", out);                          \
+                    ptr_line = str + num + 1;                               \
+                    free (out);                                             
+#endif
+
+#ifndef PUSH_LABELS
+#define PUSH_LABELS char name[10] = "";                         \
+                    int pos = 0;                                \
+                                                                \
+                    sscanf (ptr_line, "%s - %d", name, &pos);   \
+                    printf ("%s,,,,,%d\n", name, pos);          \
+                                                                \
+                    if (strcmp (name, "-"))                     \
+                    strcpy (strc[pos].name, name);  
+#endif            
 
 struct Labels
 {
@@ -46,9 +68,9 @@ int scanLine (const char *ptr_line, char *out);
 int convertFuncIntoNumber (char *str, FILE *output);
 
 
-char* DisFuncDef (const char *ptr_line);
+int DisFuncDef (const char *ptr_line, char *out);
 int fill_labels (Labels *strc);
-char* defineName (int funcNum);
+int defineName (int funcNum, char *name_of_func);
 int convertNumberIntoFunc (char *str, FILE *output);
 unsigned long long pow_mod (unsigned long long n, unsigned long long k);
 unsigned long long mult_mod (unsigned long long n, unsigned long long k);

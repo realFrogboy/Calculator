@@ -1,4 +1,5 @@
 #include "calculator.h"
+#include <math.h>
 
 int regNum = 0;
 
@@ -44,9 +45,12 @@ int CPUDtor (CPU *processor)
     stackDtor (processor->stk);
     stackDtor (processor->stk_for_call);
     
-    free (processor->stk); free (processor->stk_for_call);
-    free (processor->code); free (processor->RAM); 
-    free (processor->regs); free (processor->label);
+    free (processor->stk); 
+    free (processor->stk_for_call);
+    free (processor->code); 
+    free (processor->RAM); 
+    free (processor->regs); 
+    free (processor->label);
     processor->ip = -1;
 
     return 0;    
@@ -224,6 +228,12 @@ int RealizeFunc (CPU *processor, int funcNum, int value, int func)
             return 0;
         }
 
+        case 17:
+        {
+            sqrt_ (processor);
+            return 0;
+        }
+
         case 0:
         {    
             //hlt
@@ -250,10 +260,11 @@ int arrayCtor (CPU *processor, char *str)
     {    
         if (str[num] == '\n')
         {   
+            str[num] = '\0';
             CPUFuncDef (processor, ptr_line);
             ptr_line = str + num + 1;
+            str[num] = '\n';
         }
-
         num++;
     }
 
@@ -376,7 +387,7 @@ int mul (Stack *stk)
 
 int div (Stack *stk)
 {
-    ERROR_INFO(stk->data[stk->Size] == 0, "Division by 0!\n");
+    ERROR_INFO(stk->data[stk->Size - 1] == 0, "Division by 0!\n");
 
     OPERATION(/);
 }
@@ -384,7 +395,7 @@ int div (Stack *stk)
 int out (Stack *stk)
 {
 
-    printf ("%d\n", stk->data[stk->Size]); 
+    printf ("%5.2f\n", stk->data[stk->Size - 1]); 
     stackPop (stk);
 
     return 0;   
@@ -393,9 +404,9 @@ int out (Stack *stk)
 int pop (CPU *processor, int value, int func)
 {
     if (((func >> 7) & 1u) == 1)
-        processor->RAM[value] = processor->stk->data[processor->stk->Size];
+        processor->RAM[value] = processor->stk->data[processor->stk->Size - 1];
     else    
-        processor->regs[value] = processor->stk->data[processor->stk->Size];
+        processor->regs[value] = processor->stk->data[processor->stk->Size - 1];
     
     stackPop (processor->stk);
 
@@ -411,7 +422,7 @@ int jmp (CPU *processor, int value)
 
 int ja (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] > processor->stk->data[processor->stk->Size])
+    if (processor->stk->data[processor->stk->Size - 2] > processor->stk->data[processor->stk->Size - 1])
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -421,7 +432,7 @@ int ja (CPU *processor, int value)
 
 int jae (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] >= processor->stk->data[processor->stk->Size])
+    if (processor->stk->data[processor->stk->Size - 2] >= processor->stk->data[processor->stk->Size - 1])
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -431,7 +442,7 @@ int jae (CPU *processor, int value)
 
 int jb (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] < processor->stk->data[processor->stk->Size])
+    if (processor->stk->data[processor->stk->Size - 2] < processor->stk->data[processor->stk->Size - 1])
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -441,7 +452,7 @@ int jb (CPU *processor, int value)
 
 int jbe (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] <= processor->stk->data[processor->stk->Size])
+    if (processor->stk->data[processor->stk->Size - 2] <= processor->stk->data[processor->stk->Size - 1])
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -451,7 +462,8 @@ int jbe (CPU *processor, int value)
 
 int je (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] == processor->stk->data[processor->stk->Size])
+    printf ("==============%f, %f\n", processor->stk->data[processor->stk->Size - 2], processor->stk->data[processor->stk->Size - 1]);
+    if (isequal (processor->stk->data[processor->stk->Size - 2], processor->stk->data[processor->stk->Size - 1]))
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -461,7 +473,7 @@ int je (CPU *processor, int value)
 
 int jne (CPU *processor, int value)
 {
-    if (processor->stk->data[processor->stk->Size - 1] != processor->stk->data[processor->stk->Size])
+    if (processor->stk->data[processor->stk->Size - 2] != processor->stk->data[processor->stk->Size - 1])
         processor->ip = processor->label[value] - 5;
     
     stackPop (processor->stk); stackPop (processor->stk);
@@ -479,8 +491,20 @@ int call (CPU *processor, int value)
 
 int ret (CPU *processor)
 {
-    processor->ip = processor->stk_for_call->data[processor->stk_for_call->Size] - 1;
+    processor->ip = processor->stk_for_call->data[processor->stk_for_call->Size - 1] - 1;
     stackPop (processor->stk_for_call);
+
+    return 0;
+}
+
+int sqrt_ (CPU *processor)
+{
+    int value = processor->stk->data[processor->stk->Size - 1];
+    stackPop (processor->stk);
+    double num = (double)value;
+    double res = sqrt (num);
+    int res_i = (int)res;
+    stackPush (processor->stk, res_i); 
 
     return 0;
 }
@@ -539,11 +563,34 @@ char* transform_file_to_str (FILE *input)
 
     ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
-    char *str = (char*) calloc (file_info.st_size, sizeof (char));
+    char *str = (char*) calloc (file_info.st_size + 1, sizeof (char));
     ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
 
     int nReaded = fread (str, sizeof (char), file_info.st_size, input);
     ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
 
+    str[file_info.st_size] = '\0';
+
     return str;
+}
+
+struct stat get_file_info (FILE *input) 
+{
+    struct stat file_info;
+
+    int fd = fileno (input);
+    ERROR_INFO(fd == -1, "Fileno error\n");
+
+    ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
+
+    return file_info;    
+}
+
+bool isequal(double a, double b){
+    const double EPSILON = 0.0001; //measurement error
+    
+    if (fabs(a - b) <= EPSILON)
+        return 1;
+    else 
+        return 0;
 }

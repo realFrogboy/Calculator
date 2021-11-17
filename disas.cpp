@@ -2,12 +2,9 @@
 
 struct Labels *label;
 
-char* DisFuncDef (const char *ptr_line)
+int DisFuncDef (const char *ptr_line, char *out)
 {   
     int funcNum = 0, func = 0, regNum = 0, val = 0, ver = 0;
-
-    char *str = (char*) calloc (100, sizeof (char));
-    ERROR_INFO(str == NULL, "Can't alloc memory\n");
 
     char *name_of_func = (char*) calloc (10, sizeof (char));
     ERROR_INFO(name_of_func == NULL, "Can't alloc memory\n");
@@ -18,10 +15,11 @@ char* DisFuncDef (const char *ptr_line)
         for (int num = 0; num < NUM_OF_LABELS; num++)
         {
             if (num == func)
-                sprintf (str, ": %s", label[num].name);
+                sprintf (out, ": %s", label[num].name);
         }
 
-        return str;
+        free (name_of_func);
+        return 0;
     }
     
     sscanf (ptr_line, "%d", &func);
@@ -29,7 +27,8 @@ char* DisFuncDef (const char *ptr_line)
     for (int num = 4; num >= 0; num--)
         funcNum += ((func >> num) & 1u) * pow_mod (2, num);
 
-    name_of_func = defineName (funcNum);
+    int tmp = defineName (funcNum, name_of_func);
+    ERROR_INFO(tmp == 1, "There is no such function");
     
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
     {    
@@ -37,9 +36,10 @@ char* DisFuncDef (const char *ptr_line)
 
         char reg = (char)(regNum + (int)('a') - 1);
 
-        (((func >> 7) & 1u) == 1) ? sprintf (str, "%s [%cx + %d]", name_of_func, reg, val) : sprintf (str, "%s %cx + %d", name_of_func, reg, val);
+        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%cx + %d]", name_of_func, reg, val) : sprintf (out, "%s %cx + %d", name_of_func, reg, val);
 
-        return str;
+        free (name_of_func);
+        return 0;
     }
 
     else if ((((func >> 6) & 1u) == 1))
@@ -48,9 +48,10 @@ char* DisFuncDef (const char *ptr_line)
 
         char reg = (char)(regNum + (int)('a') - 1);
 
-        (((func >> 7) & 1u) == 1) ? sprintf (str, "%s [%cx]", name_of_func, reg) : sprintf (str, "%s %cx", name_of_func, reg);
+        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%cx]", name_of_func, reg) : sprintf (out, "%s %cx", name_of_func, reg);
 
-        return str;   
+        free (name_of_func);
+        return 0;   
     }
 
     else if ((((func >> 5) & 1u) == 1))
@@ -62,142 +63,147 @@ char* DisFuncDef (const char *ptr_line)
             for (int num = 0; num < NUM_OF_LABELS; num++)                   //
                 if (num == val)                                             //
                 {                                                           // FOR FUNCTIONS WITH LABELS
-                    sprintf (str, "%s :: %s", name_of_func, label[num].name);//
-                    return str;                                             //
+                    sprintf (out, "%s :: %s", name_of_func, label[num].name);//
+                    free (name_of_func);                                    //
+                    return 1;                                               //
                 }                                                           //
         }                                                                   // FOR FUNCTIONS WITH LABELS
 
-        (((func >> 7) & 1u) == 1) ? sprintf (str, "%s [%d]", name_of_func, val) : sprintf (str, "%s %d", name_of_func, val);
+        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%d]", name_of_func, val) : sprintf (out, "%s %d", name_of_func, val);
 
-        return str;   
+        free (name_of_func);
+        return 0;   
     }
 
     else
-        sprintf (str, "%s", name_of_func);
+        sprintf (out, "%s", name_of_func);
 
     free (name_of_func);
 
-    return str;
+    return 0;
 }
 
 
 //-----------------------------------------------------------------------------
 
 
-char* defineName (int funcNum)
+int defineName (int funcNum, char *name_of_func)
 {
-    char *res = (char*) calloc (10, sizeof (char));
-    ERROR_INFO(res == NULL, "Can't alloc memory\n");
-
     switch (funcNum)
     {
         case 0:
         {  
-            strcpy (res, "hlt");
-            return res;
+            strcpy (name_of_func, "hlt");
+            return 0;
         }
         
         case 1:
         {
-            strcpy (res, "push");
-            return res;
+            strcpy (name_of_func, "push");
+            return 0;
         }
         
         case 2:
         {
-            strcpy (res, "add");
-            return res;
+            strcpy (name_of_func, "add");
+            return 0;
         }
         
         case 3:
         {
-            strcpy (res, "sub");
-            return res;
+            strcpy (name_of_func, "sub");
+            return 0;
         }
         
         case 4:
         {
-            strcpy (res, "mul");
-            return res;
+            strcpy (name_of_func, "mul");
+            return 0;
         }
         
         case 5:
         {
-            strcpy (res, "div");
-            return res;
+            strcpy (name_of_func, "div");
+            return 0;
         }
         
         case 6:
         {
-            strcpy (res, "out");
-            return res;
+            strcpy (name_of_func, "out");
+            return 0;
         }
 
         case 7:
         {
-            strcpy (res, "pop");
-            return res;
+            strcpy (name_of_func, "pop");
+            return 0;
         }
 
         case 8:
         {
-            strcpy (res, "jmp");
-            return res;
+            strcpy (name_of_func, "jmp");
+            return 0;
         }
 
         case 9:
         {
-            strcpy (res, "ja");
-            return res;
+            strcpy (name_of_func, "ja");
+            return 0;
         }
 
         case 10:
         {
-            strcpy (res, "jae");
-            return res;
+            strcpy (name_of_func, "jae");
+            return 0;
         }
 
         case 11:
         {
-            strcpy (res, "jb");
-            return res;
+            strcpy (name_of_func, "jb");
+            return 0;
         }
 
         case 12:
         {
-            strcpy (res, "jbe");
-            return res;
+            strcpy (name_of_func, "jbe");
+            return 0;
         }
 
         case 13:
         {
-            strcpy (res, "je");
-            return res;
+            strcpy (name_of_func, "je");
+            return 0;
         }
 
         case 14:
         {
-            strcpy (res, "jne");
-            return res;
+            strcpy (name_of_func, "jne");
+            return 0;
         }
 
         case 15:
         {
-            strcpy (res, "call");
-            return res;
+            strcpy (name_of_func, "call");
+            return 0;
         }
 
         case 16:
         {
-            strcpy (res, "ret");
-            return res;
+            strcpy (name_of_func, "ret");
+            return 0;
+        }
+
+        case 17:
+        {
+            strcpy (name_of_func, "sqrt");
+            return 0;
         }
         
         default:
         {  
-            ERROR_INFO(res != NULL, "There is no such function\n");
-            strcpy (res, "dich");
-            return res;
+            ERROR_INFO(name_of_func != NULL, "There is no such function\n");
+            strcpy (name_of_func, "dich");
+            return 1;
         } 
     }  
 }
@@ -224,20 +230,14 @@ int convertNumberIntoFunc (char *str, FILE *output)
     {    
         if (str[num] == '\n')
         {    
-            char *out = (char*) calloc (100, sizeof (char));
-            ERROR_INFO(out == NULL, "Can't alloc memory\n");
-        
-            out = DisFuncDef (ptr_line);
-
-            fprintf (output, "%s\n", out);
-
-            ptr_line = str + num + 1;
-
-            free (out);
+            str[num] = '\0';
+            DIS_PASS;
+            str[num] = '\n';
         }
-
         num++;
     }
+
+    DIS_PASS;
 
     LabelsDtor (label);
     free (label);
@@ -263,20 +263,19 @@ int fill_labels (Labels *strc)
     {    
         if (str[num] == '\n')
         {    
-            char name[10] = "";
-            int pos = 0;
-
-            sscanf (ptr_line, "%s - %d", name, &pos);
-            printf ("%s,,,,,%d\n", name, pos);
-
-            if (strcmp (name, "-"))
-                strcpy (strc[pos].name, name);
+            str[num] = '\0';
+            
+            PUSH_LABELS;
 
             ptr_line = str + num + 1;
+
+            str[num] = '\n';
         }
 
         num++;
     }
+
+    PUSH_LABELS;
 
     free (str);
     fclose (label_file);
@@ -338,11 +337,13 @@ char* transform_file_to_str (FILE *input)
 
     ERROR_INFO(fstat (fd, &file_info) == -1, "Fstat error\n");
 
-    char *str = (char*) calloc (file_info.st_size, sizeof (char));
+    char *str = (char*) calloc (file_info.st_size + 1, sizeof (char));
     ERROR_INFO(str == NULL,  "Can't alloc meemory\n");
 
     int nReaded = fread (str, sizeof (char), file_info.st_size, input);
     ERROR_INFO(nReaded != file_info.st_size, "Can't read file\n");
+
+    str[file_info.st_size] = '\0';
 
     return str;
 }

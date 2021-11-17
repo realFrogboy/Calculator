@@ -1,5 +1,7 @@
 #include "stack.h"
-//#include "all_hashs.h"
+#include "hash.h"
+
+const uint32_t SEED = 1; // for hash
 
 extern int DEBUG_LEVEL;
 
@@ -10,7 +12,7 @@ ERRORS stackCtor (Stack* st)
     st->capacity = START_STACK_SIZE; 
     st->Size = 0;
 
-    st->data = (int*) calloc (st->capacity + 4, sizeof (int));
+    st->data = (double*) calloc (st->capacity + 2, sizeof (double));
     ERROR_INFO(st->data == NULL, "ERROR: Can't alloc memory\n");
 
     st->data++;
@@ -18,6 +20,8 @@ ERRORS stackCtor (Stack* st)
     st->leftCanary = CANARY; 
     st->rightCanary = CANARY;
     PUT_CANARY;
+
+    CALC_HASH;
 
     CHECK_STACK;
 
@@ -28,15 +32,18 @@ ERRORS stackCtor (Stack* st)
 //-----------------------------------------------------------------------------
 
 
-ERRORS stackPush (Stack* st, int value)
+ERRORS stackPush (Stack* st, double value)
 {
     CHECK_STACK;
 
     if (st->Size >= st->capacity)
-        reallocate (st, st->capacity * RESIZE_COEFFICIENT); //wrong
+        reallocate (st, st->capacity * RESIZE_COEFFICIENT);
 
-    st->Size++;
     *(st->data + st->Size) = value;
+    
+    st->Size++;
+
+    CALC_HASH;
 
     CHECK_STACK;
 
@@ -57,6 +64,9 @@ ERRORS stackPop (Stack* st)
     st->data[st->Size] = POISON;
     
     --st->Size;
+    PUT_CANARY;
+
+    CALC_HASH;
 
     CHECK_STACK;
 
@@ -88,7 +98,7 @@ ERRORS reallocate (Stack* st, const size_t newSize) //static
     st->capacity = newSize;
     st->data--;
 
-    int *tmp = (int*) realloc (st->data, (st->capacity + 4) * sizeof(int));
+    double *tmp = (double*) realloc (st->data, (st->capacity + 2) * sizeof(double));
     if (tmp != NULL)
     {   
         st->data = tmp;
@@ -98,6 +108,8 @@ ERRORS reallocate (Stack* st, const size_t newSize) //static
         ERROR_INFO(tmp == NULL, "ERROR: Can't realloc memory\n");
 
     PUT_CANARY;
+
+    CALC_HASH;
 
     CHECK_STACK;
 
@@ -175,7 +187,7 @@ void stackDump (int error)
 //-----------------------------------------------------------------------------
 
 
-ERRORS stackOK (const Stack* st, long long hash_data, long long hash_capacity, long long hash_size)
+ERRORS stackOK (const Stack* st)
 {
     if ((DEBUG_LEVEL == 1) || (DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
@@ -186,15 +198,15 @@ ERRORS stackOK (const Stack* st, long long hash_data, long long hash_capacity, l
     if ((DEBUG_LEVEL == 2) || (DEBUG_LEVEL == 3))
     {
         if (*(canary_t*)(st->data - 1) != CANARY) return DATA_CANARY_LEFT_ERROR;                 
-        if (*(canary_t*)(st->data + st->capacity + 1) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
+        if (*(canary_t*)(st->data + st->capacity) != CANARY) return DATA_CANARY_RIGHT_ERROR; 
         if (st->leftCanary != CANARY) return STACK_CANARY_LEFT_ERROR;             
         if (st->rightCanary != CANARY) return STACK_CANARY_RIGHT_ERROR;
     }
 
     if (DEBUG_LEVEL == 3) {
-        if (TEMPLATE_HASH(Hash, int) (st->data) != hash_data) return DATA_HASH_ERROR;
-        if (TEMPLATE_HASH(Hash, size_t) (&st->capacity) != hash_capacity) return CAPACITY_HASH_ERROR;
-        if (TEMPLATE_HASH(Hash, size_t) (&st->Size) != hash_size) return SIZE_HASH_ERROR;
+        if (MurmurHash1 (st->data, sizeof(st->data), SEED) != st->data_hash) return DATA_HASH_ERROR;
+        if (st->capacity != st->capacity_hash) return CAPACITY_HASH_ERROR;
+        if (st->Size != st->size_hash) return SIZE_HASH_ERROR;
     }
 
     return NO_ERRORS;
@@ -206,9 +218,9 @@ ERRORS stackOK (const Stack* st, long long hash_data, long long hash_capacity, l
 
 void prinStack (const Stack* st)
 {
-    for (unsigned num = 0; num <= st->Size; num++)
+    for (unsigned num = 0; num < st->Size; num++)
     {
-        printf ("%d\n", *(st->data + num));
+        printf ("%f\n", *(st->data + num));
     }
 
     printf ("%ld --- %ld\n", st->Size, st->capacity);
