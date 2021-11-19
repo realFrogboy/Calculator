@@ -5,7 +5,7 @@
 
 #ifndef OPERATION
 #define OPERATION(sign) do{                                                                     \
-                            int res = stk->data[stk->Size - 2] sign stk->data[stk->Size - 1];   \
+                            double res = stk->data[stk->Size - 2] sign stk->data[stk->Size - 1];   \
                             stackPop (stk); stackPop (stk);                                     \
                             stackPush (stk, res);                                               \
                             return 0;                                                           \
@@ -35,12 +35,12 @@ int arrayCtor (CPU *processor, char *str);
 int CPUFuncDef (CPU *processor, const char *ptr_line);
 
 int DOFunc (CPU *processor);
-int RealizeFunc (CPU *processor, int funcNum, int value, int func);
+int RealizeFunc (CPU *processor, int funcNum, double value, int func);
 
 int CPUCtor (CPU *processor);
 int CPUDtor (CPU *processor);
 
-int push (CPU *processor, int value, int func);
+int push (CPU *processor, double value, int func);
 int add (Stack *stk);
 int sub (Stack *stk);
 int mul (Stack *stk);

@@ -62,6 +62,8 @@ int CPUDtor (CPU *processor)
 
 int DOFunc (CPU *processor)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     int func = *(int*)(processor->code + processor->ip);
     
     int funcNum = 0;
@@ -72,12 +74,12 @@ int DOFunc (CPU *processor)
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
     {    
         regNum = *(int*)(processor->code + processor->ip + 1);
-        int val = *(int*)(processor->code + processor->ip + 1);
+        int val = *(double*)(processor->code + processor->ip + 1);
 
         int error = RealizeFunc (processor, funcNum, processor->regs[regNum] + val, func);
         ERROR_INFO(error == 404, "There is no such function\n");
 
-        processor->ip += 9;
+        processor->ip += 13;
 
         return error;
     }
@@ -96,12 +98,12 @@ int DOFunc (CPU *processor)
 
     else if ((((func >> 5) & 1u) == 1))
     {
-        int val = *(int*)(processor->code + processor->ip + 1);
+        int val = *(double*)(processor->code + processor->ip + 1);
 
         int error = RealizeFunc (processor, funcNum, val, func);
         ERROR_INFO(error == 404, "There is no such function\n");
 
-        processor->ip += 5;
+        processor->ip += 9;
 
         return error;
     }
@@ -123,8 +125,10 @@ int DOFunc (CPU *processor)
 //-----------------------------------------------------------------------------
 
 
-int RealizeFunc (CPU *processor, int funcNum, int value, int func)
+int RealizeFunc (CPU *processor, int funcNum, double value, int func)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     switch (funcNum)
     {
         case 1:
@@ -253,6 +257,9 @@ int RealizeFunc (CPU *processor, int funcNum, int value, int func)
 
 int arrayCtor (CPU *processor, char *str)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+    ERROR_INFO(str == NULL, "Void ptr on string\n");
+
     char *ptr_line = str; 
     int num = 0;
 
@@ -291,6 +298,9 @@ int arrayCtor (CPU *processor, char *str)
 
 int CPUFuncDef (CPU *processor, const char *ptr_line)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+    ERROR_INFO(ptr_line == NULL, "Void ptr on string\n");
+
     int func = 0, ver = 0;
 
     sscanf (ptr_line, ":%d%n", &func, &ver);
@@ -309,14 +319,15 @@ int CPUFuncDef (CPU *processor, const char *ptr_line)
 
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
     {    
-        int regNum = 0, val = 0;
-        sscanf (ptr_line, "%d %d %d", &func, &regNum, &val);
+        int regNum = 0;
+        double val = 0;
+        sscanf (ptr_line, "%d %d %lf", &func, &regNum, &val);
 
         processor->code[processor->ip] = (char) func;
         *(int*)(processor->code + processor->ip + 1) = regNum;
-        *(int*)(processor->code + processor->ip + 5) = val;
+        *(double*)(processor->code + processor->ip + 5) = val;
 
-        processor->ip += 9;
+        processor->ip += 13;
 
         return 0;
     }
@@ -336,13 +347,13 @@ int CPUFuncDef (CPU *processor, const char *ptr_line)
 
     else if ((((func >> 5) & 1u) == 1))
     {
-        int val = 0;
-        sscanf (ptr_line, "%d %d", &func, &val);
+        double val = 0;
+        sscanf (ptr_line, "%d %lf", &func, &val);
 
         processor->code[processor->ip] = (char) func;
-        *(int*)(processor->code + processor->ip + 1) = val;
+        *(double*)(processor->code + processor->ip + 1) = val;
 
-        processor->ip += 5;
+        processor->ip += 9;
 
         return 0;   
     }
@@ -360,10 +371,12 @@ int CPUFuncDef (CPU *processor, const char *ptr_line)
 //-----------------------------------------------------------------------------
 
 
-int push (CPU *processor, int value, int func)
+int push (CPU *processor, double value, int func)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (((func >> 7) & 1u) == 1)
-        stackPush (processor->stk, processor->RAM[value]);
+        stackPush (processor->stk, processor->RAM[(int)value]);
     else
         stackPush (processor->stk, value);
 
@@ -403,6 +416,8 @@ int out (Stack *stk)
 
 int pop (CPU *processor, int value, int func)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (((func >> 7) & 1u) == 1)
         processor->RAM[value] = processor->stk->data[processor->stk->Size - 1];
     else    
@@ -415,15 +430,19 @@ int pop (CPU *processor, int value, int func)
 
 int jmp (CPU *processor, int value)
 {
-    processor->ip = processor->label[value] - 5;
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
+    processor->ip = processor->label[value] - 9;
 
     return 0;
 }
 
 int ja (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (processor->stk->data[processor->stk->Size - 2] > processor->stk->data[processor->stk->Size - 1])
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -432,8 +451,10 @@ int ja (CPU *processor, int value)
 
 int jae (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (processor->stk->data[processor->stk->Size - 2] >= processor->stk->data[processor->stk->Size - 1])
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -442,8 +463,10 @@ int jae (CPU *processor, int value)
 
 int jb (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (processor->stk->data[processor->stk->Size - 2] < processor->stk->data[processor->stk->Size - 1])
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -452,8 +475,10 @@ int jb (CPU *processor, int value)
 
 int jbe (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (processor->stk->data[processor->stk->Size - 2] <= processor->stk->data[processor->stk->Size - 1])
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -462,9 +487,11 @@ int jbe (CPU *processor, int value)
 
 int je (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     printf ("==============%f, %f\n", processor->stk->data[processor->stk->Size - 2], processor->stk->data[processor->stk->Size - 1]);
     if (isequal (processor->stk->data[processor->stk->Size - 2], processor->stk->data[processor->stk->Size - 1]))
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -473,8 +500,10 @@ int je (CPU *processor, int value)
 
 int jne (CPU *processor, int value)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     if (processor->stk->data[processor->stk->Size - 2] != processor->stk->data[processor->stk->Size - 1])
-        processor->ip = processor->label[value] - 5;
+        processor->ip = processor->label[value] - 9;
     
     stackPop (processor->stk); stackPop (processor->stk);
 
@@ -483,14 +512,18 @@ int jne (CPU *processor, int value)
 
 int call (CPU *processor, int value)
 {
-    stackPush (processor->stk_for_call, processor->ip + 5);
-    processor->ip = processor->label[value] - 5;
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
+    stackPush (processor->stk_for_call, processor->ip + 9);
+    processor->ip = processor->label[value] - 9;
 
     return 0;
 }
 
 int ret (CPU *processor)
 {
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
     processor->ip = processor->stk_for_call->data[processor->stk_for_call->Size - 1] - 1;
     stackPop (processor->stk_for_call);
 
@@ -499,12 +532,12 @@ int ret (CPU *processor)
 
 int sqrt_ (CPU *processor)
 {
-    int value = processor->stk->data[processor->stk->Size - 1];
+    ERROR_INFO(processor == NULL, "Void ptr on processor\n");
+
+    double value = processor->stk->data[processor->stk->Size - 1];
     stackPop (processor->stk);
-    double num = (double)value;
-    double res = sqrt (num);
-    int res_i = (int)res;
-    stackPush (processor->stk, res_i); 
+    double res = sqrt (value);
+    stackPush (processor->stk, res); 
 
     return 0;
 }
@@ -556,6 +589,8 @@ unsigned long long mult_mod (unsigned long long n, unsigned long long k)
 
 char* transform_file_to_str (FILE *input)
 {
+    ERROR_INFO(input == NULL, "Void ptr on file\n");
+
     struct stat file_info;
 
     int fd = fileno (input);
@@ -576,6 +611,8 @@ char* transform_file_to_str (FILE *input)
 
 struct stat get_file_info (FILE *input) 
 {
+    ERROR_INFO(input == NULL, "Void ptr on file\n");
+
     struct stat file_info;
 
     int fd = fileno (input);
@@ -589,7 +626,7 @@ struct stat get_file_info (FILE *input)
 bool isequal(double a, double b){
     const double EPSILON = 0.0001; //measurement error
     
-    if (fabs(a - b) <= EPSILON)
+    if (fabs(a - b) < EPSILON)
         return 1;
     else 
         return 0;

@@ -12,7 +12,7 @@ int DEBUG_LEVEL = 3;
 int main ()
 {
     FILE *input_code = NULL;
-    //FILE *input_com = NULL;
+    FILE *input_com = NULL;
     struct CPU processor;
 
     CPUCtor (&processor);
@@ -20,11 +20,13 @@ int main ()
     input_code = fopen ("code.txt", "rb");
     ERROR_INFO(input_code == NULL, "Can't open file\n");
 
-    /*input_com = fopen ("commands.txt", "rb");
+    input_com = fopen ("commands.txt", "rb");
     ERROR_INFO(input_com == NULL, "Can't open file\n"); 
     
     struct stat code_info = get_file_info (input_code);
     struct stat com_info  = get_file_info (input_com);
+
+    printf("%ld -- %ld\n", com_info.st_atime, code_info.st_atime);
 
     if (com_info.st_atime > code_info.st_atime)
     {
@@ -35,7 +37,7 @@ int main ()
 
         strcpy (commands, "./disass");
         system (commands);
-    }*/
+    }
 
     char *str = transform_file_to_str (input_code);
 
@@ -49,19 +51,19 @@ int main ()
         prinStack (processor.stk);
         printf ("----------------\n");
         printf ("%d\n", processor.ip);
-        //printf ("&&&&&&&&&&&&&&&&\n");
-        //for (int num = 0; num < 5; num++)
-        //{
-        //    printf ("%d,  ", processor.regs[num]);
-        //    printf ("\n");
-        //}
+        printf ("&&&&&&&&&&&&&&&&\n");
+        for (int num = 0; num < 5; num++)
+        {
+            printf ("%d,  ", processor.regs[num]);
+            printf ("\n");
+        }
         printf ("================\n");*/
     }
 
     CPUDtor (&processor);
     free (str);
     fclose (input_code); 
-    //fclose (input_com);
+    fclose (input_com);
 
     return 0;
 }

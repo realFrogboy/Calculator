@@ -6,8 +6,12 @@ int count = 1;
 
 int scanLine (const char *ptr_line, char *out)
 {
+    ERROR_INFO(ptr_line == NULL, "Void ptr\n");
+    ERROR_INFO(out == NULL, "Void ptr\n");
+
     char reg = '\0', func[10] = "", lab[10] = "";
-    int value = 0, ver = 0, res = 404;
+    int ver = 0, res = 404;
+    double value = 0;
 
     sprintf (out, "%s", "bad");
 
@@ -21,7 +25,7 @@ int scanLine (const char *ptr_line, char *out)
         return 0;
     }
      
-    sscanf (ptr_line, "%s [%cx + %d]%n", func, &reg, &value, &ver);
+    sscanf (ptr_line, "%s [%cx + %lf]%n", func, &reg, &value, &ver);
     if (ver)
     {
         res = AssFuncDef (func);
@@ -33,12 +37,12 @@ int scanLine (const char *ptr_line, char *out)
 
         res = res | (1u << 7);
 
-        sprintf (out, "%d %d %d", res, regNum, value);
+        sprintf (out, "%d %d %lf", res, regNum, value);
 
         return 0;
     }
 
-    sscanf (ptr_line, "%s %cx + %d%n", func, &reg, &value, &ver);
+    sscanf (ptr_line, "%s %cx + %lf%n", func, &reg, &value, &ver);
     if (ver)
     {
         res = AssFuncDef (func);
@@ -48,7 +52,7 @@ int scanLine (const char *ptr_line, char *out)
 
         int regNum = placeReg (reg, &res);
 
-        sprintf (out, "%d %d %d", res, regNum, value);
+        sprintf (out, "%d %d %lf", res, regNum, value);
 
         return 0;
     }
@@ -68,7 +72,7 @@ int scanLine (const char *ptr_line, char *out)
         return 0;
     }
 
-    sscanf (ptr_line, "%s [%d]%n", func, &value, &ver);
+    sscanf (ptr_line, "%s [%lf]%n", func, &value, &ver);
     if (ver)
     {   
         res = AssFuncDef (func);
@@ -77,7 +81,7 @@ int scanLine (const char *ptr_line, char *out)
         res = res | (1u << 5); 
         res = res | (1u << 7);
 
-        sprintf (out, "%d %d", res, value);
+        sprintf (out, "%d %lf", res, value);
 
         return 0;
     }
@@ -95,7 +99,7 @@ int scanLine (const char *ptr_line, char *out)
         return 0;
     }
 
-    sscanf (ptr_line, "%s %d%n", func, &value, &ver);
+    sscanf (ptr_line, "%s %lf%n", func, &value, &ver);
     if (ver)
     { 
         res = AssFuncDef (func);
@@ -103,7 +107,7 @@ int scanLine (const char *ptr_line, char *out)
 
         res = res | (1u << 5); 
 
-        sprintf (out, "%d %d", res, value);
+        sprintf (out, "%d %lf", res, value);
 
         return 0;
     }
@@ -111,6 +115,8 @@ int scanLine (const char *ptr_line, char *out)
     sscanf (ptr_line, "%s :: %s%n", func, lab, &ver);
     if (ver)
     {
+        int value = 0;
+
         res = AssFuncDef (func);
         ERROR_INFO(res == 404, "There is no such function\n");
 
@@ -152,6 +158,9 @@ int scanLine (const char *ptr_line, char *out)
 
 int convertFuncIntoNumber (char *str, FILE *output)
 {
+    ERROR_INFO(str == NULL, "Void ptr\n");
+    ERROR_INFO(output == NULL, "Void ptr\n");
+
     label = (Labels*) calloc (NUM_OF_LABELS, sizeof (Labels));
     ERROR_INFO(label == NULL, "Can't alloc memory\n");
     
@@ -209,6 +218,8 @@ int convertFuncIntoNumber (char *str, FILE *output)
 
 int AssFuncDef (const char *func)
 {
+    ERROR_INFO(func == NULL, "Void ptr\n");
+
     int res = 404;
 
     if (strcmp ("push", func) == 0)
@@ -274,6 +285,8 @@ int AssFuncDef (const char *func)
 
 int placeReg (char reg, int *res)
 {
+    ERROR_INFO(res == NULL, "Void ptr\n");
+
     int regNum = 0;
 
     if ((reg >= 'a') && (reg <= 'd')) 
@@ -333,6 +346,8 @@ int LabelsDtor (Labels *strc)
 
 char* transform_file_to_str (FILE *input)
 {
+    ERROR_INFO(input == NULL, "Void ptr\n");
+
     struct stat file_info;
 
     int fd = fileno (input);

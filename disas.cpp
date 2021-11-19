@@ -4,7 +4,11 @@ struct Labels *label;
 
 int DisFuncDef (const char *ptr_line, char *out)
 {   
-    int funcNum = 0, func = 0, regNum = 0, val = 0, ver = 0;
+    ERROR_INFO(ptr_line == NULL, "Void ptr on string\n");
+    ERROR_INFO(out == NULL, "Void ptr on string\n");
+
+    int funcNum = 0, func = 0, regNum = 0, ver = 0;
+    double val = 0;
 
     char *name_of_func = (char*) calloc (10, sizeof (char));
     ERROR_INFO(name_of_func == NULL, "Can't alloc memory\n");
@@ -32,11 +36,11 @@ int DisFuncDef (const char *ptr_line, char *out)
     
     if ((((func >> 5) & 1u) == 1) && (((func >> 6) & 1u) == 1))
     {    
-        sscanf (ptr_line, "%d %d %d", &func, &regNum, &val);
+        sscanf (ptr_line, "%d %d %lf", &func, &regNum, &val);
 
         char reg = (char)(regNum + (int)('a') - 1);
 
-        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%cx + %d]", name_of_func, reg, val) : sprintf (out, "%s %cx + %d", name_of_func, reg, val);
+        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%cx + %lf]", name_of_func, reg, val) : sprintf (out, "%s %cx + %lf", name_of_func, reg, val);
 
         free (name_of_func);
         return 0;
@@ -56,12 +60,12 @@ int DisFuncDef (const char *ptr_line, char *out)
 
     else if ((((func >> 5) & 1u) == 1))
     {
-        sscanf (ptr_line, "%d %d", &func, &val);
+        sscanf (ptr_line, "%d %lf", &func, &val);
 
         if ((funcNum >= 8) && (funcNum <=15))                               // FOR FUNCTIONS WITH LABELS
         {                                                                   // 
             for (int num = 0; num < NUM_OF_LABELS; num++)                   //
-                if (num == val)                                             //
+                if (num == (int)val)                                        //
                 {                                                           // FOR FUNCTIONS WITH LABELS
                     sprintf (out, "%s :: %s", name_of_func, label[num].name);//
                     free (name_of_func);                                    //
@@ -69,7 +73,7 @@ int DisFuncDef (const char *ptr_line, char *out)
                 }                                                           //
         }                                                                   // FOR FUNCTIONS WITH LABELS
 
-        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%d]", name_of_func, val) : sprintf (out, "%s %d", name_of_func, val);
+        (((func >> 7) & 1u) == 1) ? sprintf (out, "%s [%lf]", name_of_func, val) : sprintf (out, "%s %lf", name_of_func, val);
 
         free (name_of_func);
         return 0;   
@@ -89,6 +93,8 @@ int DisFuncDef (const char *ptr_line, char *out)
 
 int defineName (int funcNum, char *name_of_func)
 {
+    ERROR_INFO(name_of_func == NULL, "Void ptr on string\n");
+
     switch (funcNum)
     {
         case 0:
@@ -214,6 +220,9 @@ int defineName (int funcNum, char *name_of_func)
 
 int convertNumberIntoFunc (char *str, FILE *output)
 {
+    ERROR_INFO(str == NULL, "Void ptr on string\n");
+    ERROR_INFO(output == NULL, "Void ptr on file\n");
+
     label = (Labels*) calloc(NUM_OF_LABELS, sizeof (Labels));
     ERROR_INFO(label == NULL, "Can't alloc memory\n");
     
@@ -330,6 +339,8 @@ unsigned long long mult_mod (unsigned long long n, unsigned long long k)
 
 char* transform_file_to_str (FILE *input)
 {
+    ERROR_INFO(input == NULL, "Void ptr on file\n");
+
     struct stat file_info;
 
     int fd = fileno (input);
